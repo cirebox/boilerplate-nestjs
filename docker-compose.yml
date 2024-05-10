@@ -1,0 +1,19 @@
+# docker-compose.yml
+version: '3.8'
+services:
+  nest.js:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    container_name: boilerplate-nestjs
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/home/app/boilerplate-nestjs
+      - ./node_modules:/home/app/boilerplate-nestjs/node_modules
+    networks:
+      - futbox-network
+networks:
+  futbox-network:
+    driver: bridge
+  
