@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
   Param,
@@ -28,6 +29,7 @@ import { CreateService } from '../services/create.service';
 import { ExceptionCreateDto } from '../dtos/exception.create.dto';
 import { ExceptionUpdateDto } from '../dtos/exception.update.dto';
 import { JwtGuard } from 'src/modules/shared/guards/jwt.guard';
+import { DeleteService } from '../services/delete.service';
 
 @ApiTags('exception')
 @Controller('v1/exception')
@@ -39,6 +41,7 @@ export class HttpController {
     private readonly updateService: UpdateService,
     private readonly findService: FindService,
     private readonly findByIdService: FindByIdService,
+    private readonly deleteService: DeleteService,
   ) {}
 
   @ApiCreatedResponse({
@@ -75,7 +78,7 @@ export class HttpController {
     const response = await this.createService.execute(data);
     return {
       code: 201,
-      message: 'Categoria criada com sucesso!',
+      message: 'Registro criado com sucesso!',
       data: response,
     };
   }
@@ -111,7 +114,7 @@ export class HttpController {
     const response = await this.updateService.execute(data);
     return {
       code: 201,
-      message: 'Exceção atualizada com sucesso',
+      message: 'Registro atualizado com sucesso',
       data: response,
     };
   }
@@ -147,7 +150,43 @@ export class HttpController {
     const response = await this.findByIdService.execute(id);
     return {
       code: 200,
-      message: '',
+      message: 'Registro encontrado com sucesso!',
+      data: response,
+    };
+  }
+
+  @ApiResponse({
+    status: 200,
+    description: 'Ok. the request was successfully completed.',
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request. The request was invalid.',
+  })
+  @ApiUnauthorizedResponse({
+    status: 401,
+    description:
+      'Unauthorized. The request did not include an authentication token or the authentication token was expired.',
+  })
+  @ApiForbiddenResponse({
+    status: 403,
+    description:
+      'Forbidden. The client did not have permission to access the requested resource.',
+  })
+  @ApiNotFoundResponse({
+    status: 404,
+    description: 'Not Found. The requested resource was not found.',
+  })
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('authorization')
+  // @ApiExcludeEndpoint()
+  @ApiParam({ name: 'id', type: 'string', required: true })
+  @Delete(':id')
+  async deleteById(@Param('id') id: string): Promise<Core.ResponseData> {
+    const response = await this.deleteService.execute(id);
+    return {
+      code: 200,
+      message: 'Removido com sucesso!',
       data: response,
     };
   }
