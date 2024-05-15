@@ -10,7 +10,7 @@ export class FindService {
 
   private readonly logger = new Logger(FindService.name);
 
-  async execute(): Promise<any> {
+  async execute(): Promise<Partial<ApiTypes.Exception>[]> {
     this.logger.debug('findAll');
     return await this.exceptionRepository.find();
   }

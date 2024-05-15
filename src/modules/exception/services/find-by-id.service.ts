@@ -10,7 +10,7 @@ export class FindByIdService {
 
   private readonly logger = new Logger(FindByIdService.name);
 
-  async execute(id: string): Promise<any> {
+  async execute(id: string): Promise<Partial<ApiTypes.Exception>> {
     this.logger.debug('FindById', id);
     return await this.exceptionRepository.findById(id);
   }

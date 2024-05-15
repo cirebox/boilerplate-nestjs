@@ -8,8 +8,8 @@ import { customOptions } from './swagger/swagger.custom-options';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { LoggerFactory } from './core/logger/LoggerFactory';
 import { useContainer } from 'class-validator';
-import { join } from 'path';
-import { Transport } from '@nestjs/microservices';
+// import { join } from 'path';
+// import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication | any>(

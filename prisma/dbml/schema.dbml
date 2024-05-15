@@ -1,0 +1,12 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table exception {
+  id String [pk]
+  statusCode Int [not null]
+  message String [not null]
+  path String
+  stack String
+  createdAt DateTime [default: `now()`, not null]
+}

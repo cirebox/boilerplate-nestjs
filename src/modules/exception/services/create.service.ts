@@ -11,7 +11,9 @@ export class CreateService {
 
   private readonly logger = new Logger(CreateService.name);
 
-  async execute(data: ExceptionCreateDto): Promise<any> {
+  async execute(
+    data: ExceptionCreateDto,
+  ): Promise<Partial<ApiTypes.Exception>> {
     this.logger.debug('Create', data);
     return await this.exceptionRepository.create(data);
   }

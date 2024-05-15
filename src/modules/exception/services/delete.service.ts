@@ -10,7 +10,7 @@ export class DeleteService {
 
   private readonly logger = new Logger(DeleteService.name);
 
-  async execute(id: string): Promise<any> {
+  async execute(id: string): Promise<Partial<ApiTypes.Exception>> {
     this.logger.debug('DeleteById', id);
     return await this.exceptionRepository.delete(id);
   }

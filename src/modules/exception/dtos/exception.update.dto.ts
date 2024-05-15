@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsString, IsNumber } from 'class-validator';
 
-export class ExceptionUpdateDto implements Partial<any> {
+export class ExceptionUpdateDto implements Partial<ApiTypes.Exception> {
   @IsDefined()
   @IsString()
   @ApiProperty({ required: true, default: '' })

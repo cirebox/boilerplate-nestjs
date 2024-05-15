@@ -11,7 +11,9 @@ export class UpdateService {
 
   private readonly logger = new Logger(UpdateService.name);
 
-  async execute(data: ExceptionUpdateDto): Promise<any> {
+  async execute(
+    data: ExceptionUpdateDto,
+  ): Promise<Partial<ApiTypes.Exception>> {
     this.logger.debug('Update', data);
     return await this.exceptionRepository.update(data);
   }
