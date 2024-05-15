@@ -5,16 +5,24 @@ import { PrismaService } from '../../services/prisma.service';
 @Injectable()
 export class ExceptionRepository implements IExceptionRepository {
   constructor(private prisma: PrismaService) {}
-  create(data: any): Promise<any> {
-    return this.prisma.exception.create({ data });
+
+  async create(data: any): Promise<any> {
+    return await this.prisma.exception.create({ data });
   }
-  update(data: any): Promise<any> {
-    return this.prisma.exception.update({ data, where: { id: data.id } });
+
+  async update(data: any): Promise<any> {
+    return await this.prisma.exception.update({ data, where: { id: data.id } });
   }
-  findById(id: string): Promise<any> {
-    return this.prisma.exception.findUnique({ where: { id } });
+
+  async delete(id: string): Promise<any> {
+    return await this.prisma.exception.delete({ where: { id } });
   }
-  find(): Promise<any[]> {
-    return this.prisma.exception.findMany();
+
+  async findById(id: string): Promise<any> {
+    return await this.prisma.exception.findUnique({ where: { id } });
+  }
+
+  async find(): Promise<any[]> {
+    return await this.prisma.exception.findMany();
   }
 }

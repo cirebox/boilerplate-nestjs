@@ -7,7 +7,17 @@ Projeto base para api usando nestjs
 $ pnpm install
 ```
 
-## Running the app
+## DB Generate
+```bash
+$ npx prisma db push
+```
+
+## Seed
+```bash
+$ npx prisma db seed
+```
+
+## Running
 
 ```bash
 # development
@@ -26,6 +36,9 @@ $ pnpm run start:prod
 # unit tests
 $ pnpm run test
 
+# unit watch
+$ pnpm run test:watch
+
 # e2e tests
 $ pnpm run test:e2e
 
@@ -33,4 +46,4 @@ $ pnpm run test:e2e
 $ pnpm run test:cov
 ```
 
-Author - [Eric Pereira](https://kamilmysliwiec.com)
+Author - [Eric Pereira](https://portfolio-eric-pereira.vercel.app/)

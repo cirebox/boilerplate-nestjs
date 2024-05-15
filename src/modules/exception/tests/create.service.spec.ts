@@ -1,5 +1,5 @@
-import { CreateService } from '../../services/create.service';
-import { ExceptionCreateDto } from '../../dtos/exception.create.dto';
+import { CreateService } from '../services/create.service';
+import { ExceptionCreateDto } from '../dtos/exception.create.dto';
 import { Test, TestingModule } from '@nestjs/testing';
 
 describe('CreateService', () => {

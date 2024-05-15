@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FindByIdService } from '../../services/find-by-id.service';
+import { FindByIdService } from '../services/find-by-id.service';
 
 describe('FindByIdService', () => {
   let findByIdService: FindByIdService;

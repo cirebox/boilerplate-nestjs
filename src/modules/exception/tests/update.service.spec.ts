@@ -1,7 +1,7 @@
-import { UpdateService } from '../../services/update.service';
-import { ExceptionUpdateDto } from '../../dtos/exception.update.dto';
 import { TestingModule } from '@nestjs/testing/testing-module';
 import { Test } from '@nestjs/testing';
+import { ExceptionUpdateDto } from '../dtos/exception.update.dto';
+import { UpdateService } from '../services/update.service';
 
 describe('UpdateService', () => {
   let updateService: UpdateService;
