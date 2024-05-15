@@ -11,6 +11,12 @@ import { DeleteService } from './services/delete.service';
   imports: [SharedModule],
   exports: [CreateService],
   controllers: [HttpController],
-  providers: [FindByIdService, FindService, CreateService, UpdateService, DeleteService],
+  providers: [
+    FindByIdService,
+    FindService,
+    CreateService,
+    UpdateService,
+    DeleteService,
+  ],
 })
 export class ExceptionModule {}

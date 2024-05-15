@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package exception;
+
+message Exception {    
+    string code = 1;
+    int32 statusCode = 2;
+    string message = 3;
+    string path = 4;
+    string stack = 5;
+    string createdAt = 6;       
+}
+
+message ResponseData {
+    int32 code = 1;
+    string message = 2;
+    repeated Exception data = 3;    
+}
+
+message FindById {
+    string id = 1;    
+}
+
+message Empty {
+}
+
+service CupomService {
+    rpc Create(Exception) returns (ResponseData) {}
+    rpc Update(Exception) returns (ResponseData) {}
+    rpc Inactivate(FindById) returns (ResponseData) {}    
+    rpc Find(Empty) returns (ResponseData) {}
+}
+ 
