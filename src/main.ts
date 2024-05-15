@@ -15,11 +15,8 @@ async function bootstrap() {
       logger: LoggerFactory(),
     },
   );
-
-  SwaggerModule.setup('v1/doc', app, createDocument(app), customOptions);
-
-  app.enableCors();
   app.disable('x-powered-by');
+  app.enableCors();
   app.use(compression());
   app.useGlobalPipes(
     new ValidationPipe({
@@ -42,6 +39,7 @@ async function bootstrap() {
 
   //  app.useWebSocketAdapter(new IoAdapter(app));
 
+  SwaggerModule.setup('v1/doc', app, createDocument(app), customOptions);
   app.startAllMicroservices();
   await app.listen(process.env.PORT || 3000);
   const url = await app.getUrl();

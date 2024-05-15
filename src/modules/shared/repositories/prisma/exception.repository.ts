@@ -19,7 +19,8 @@ export class ExceptionRepository implements IExceptionRepository {
   }
 
   async findById(id: string): Promise<any> {
-    return await this.prisma.exception.findUnique({ where: { id } });
+    throw new Error('Method not implemented.');
+    // return await this.prisma.exception.findUnique({ where: { id } });
   }
 
   async find(): Promise<any[]> {
