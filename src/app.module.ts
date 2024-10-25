@@ -6,9 +6,17 @@ import { JwtGuard } from './modules/shared/guards/jwt.guard';
 import { RolesGuard } from './modules/shared/guards/roles.guard';
 import { HealthModule } from './modules/health/health.module';
 import { ExceptionModule } from './modules/exception/exception.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [SharedModule, HealthModule, ExceptionModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // Torna as configurações globais (opcional)
+    }),
+    SharedModule,
+    HealthModule,
+    ExceptionModule
+  ],
   providers: [
     {
       provide: APP_FILTER,
@@ -24,4 +32,4 @@ import { ExceptionModule } from './modules/exception/exception.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

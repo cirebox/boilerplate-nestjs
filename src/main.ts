@@ -1,28 +1,29 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { SwaggerModule } from '@nestjs/swagger';
 import * as compression from 'compression';
-import { createDocument } from './swagger/swagger.create-document';
-import { customOptions } from './swagger/swagger.custom-options';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { LoggerFactory } from './core/logger/LoggerFactory';
 import { useContainer } from 'class-validator';
+import { SWAGGER_CONFIG } from './swagger/swagger.config';
+import { createSwaggerDocumentation } from 'src/swagger/swagger.create-document';
+import { json } from 'express';
+import * as basicAuth from 'express-basic-auth';
 // import { join } from 'path';
 // import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication | any>(
     AppModule,
-    {
-      logger: LoggerFactory(),
-    },
+    // {
+    //   logger: LoggerFactory(),
+    // },
   );
   app.disable('x-powered-by');
   app.enableVersioning({
     type: VersioningType.HEADER,
     header: 'version',
   });
+  app.use(json({ limit: '200mb' }));
   app.enableCors();
   app.use(compression());
   app.useGlobalPipes(
@@ -61,14 +62,27 @@ async function bootstrap() {
 
   //  app.useWebSocketAdapter(new IoAdapter(app));
 
-  SwaggerModule.setup('v1/doc', app, createDocument(app), customOptions);
+
+  const users = process.env.DOCS_USER;
+  app.use(
+    "/docs*",
+    basicAuth({
+      challenge: true,
+      users: JSON.parse(users as string)
+    })
+  );
+
+  const start = process.env.NODE_ENV;
+  if (start === 'development') {
+    createSwaggerDocumentation('docs', app, SWAGGER_CONFIG);
+  }
+
   app.startAllMicroservices();
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   await app.listen(process.env.HTTP_PORT || 3000);
 
   const url = await app.getUrl();
-  console.log(`Application is running on: ${url}`);
-  console.log(`Swagger available at ${url}/v1/doc`);
+  console.log(`🚀 Application is running on: ${url} =>`, start);
 }
 bootstrap();
