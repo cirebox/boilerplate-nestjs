@@ -14,11 +14,11 @@ import { PrismaService } from '../shared/services/prisma.service';
 @Controller('health')
 export class HealthController {
   public constructor(
-    private health: HealthCheckService,
-    private api: ApiHealthIndicator,
-    private prisma: PrismaHealthIndicator,
+    private readonly health: HealthCheckService,
+    private readonly api: ApiHealthIndicator,
+    private readonly prisma: PrismaHealthIndicator,
     private readonly prismaService: PrismaService,
-    private microservice: MicroserviceHealthIndicator,
+    private readonly microservice: MicroserviceHealthIndicator,
   ) {}
 
   @Get()

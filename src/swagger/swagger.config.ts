@@ -6,5 +6,5 @@ export const SWAGGER_CONFIG: SwaggerConfig = {
   version: '1.0',
   externalFilePath: 'docs/json',
   filter: true,
-  tags: ['health', 'exception'],
+  tags: ['Health', 'Exception'],
 };

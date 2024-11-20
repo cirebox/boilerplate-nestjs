@@ -1,35 +1,39 @@
-import { transports, format } from 'winston';
+import * as winston from 'winston';
 import { WinstonModule } from 'nest-winston';
+import 'winston-logstash';
 
 const LoggerFactory = () => {
-  const consoleFormat = format.combine(format.timestamp(), format.json());
+  const consoleFormat = winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json(),
+  );
 
-  const transportsList: (typeof transports.Stream)[] = [
-    new transports.Console({ format: consoleFormat }),
+  const transportsList: (typeof winston.transports.Stream)[] = [
+    new winston.transports.Console({ format: consoleFormat }),
   ];
 
   if (process.env.LOG_FILE === 'true') {
     transportsList.push(
-      new transports.File({
+      new winston.transports.File({
         filename: `log/${new Date().toISOString().split('T')[0]}_info.log`,
       }),
 
-      new transports.File({
+      new winston.transports.File({
         filename: `log/${new Date().toISOString().split('T')[0]}_debug.log`,
         level: 'debug',
       }),
 
-      new transports.File({
+      new winston.transports.File({
         filename: `log/${new Date().toISOString().split('T')[0]}_error.log`,
         level: 'error',
       }),
 
-      new transports.File({
+      new winston.transports.File({
         filename: `log/${new Date().toISOString().split('T')[0]}_fatal.log`,
         level: 'fatal',
       }),
 
-      new transports.File({
+      new winston.transports.File({
         filename: `log/${new Date().toISOString().split('T')[0]}_warn.log`,
         level: 'warn',
       }),

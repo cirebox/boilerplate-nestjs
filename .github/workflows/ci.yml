@@ -1,0 +1,44 @@
+name: CI Pipeline
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Generate Prisma docs
+        run: npx prisma generate
+        env:
+          DATABASE_URL: 'file:./dev.db'
+
+      - name: Upload ERD artifacts
+        if: success()
+        uses: actions/upload-artifact@v2
+        with:
+          name: prisma-docs
+          path: |
+            ERD.md
+            ERD.svg

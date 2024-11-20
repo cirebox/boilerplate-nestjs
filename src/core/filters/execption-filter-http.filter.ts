@@ -14,7 +14,7 @@ import { CreateService } from 'src/modules/exception/services/create.service';
 
 @Catch()
 export class ExceptionFilterHttp implements ExceptionFilter {
-  private httpAdapter: AbstractHttpAdapter;
+  private readonly httpAdapter: AbstractHttpAdapter;
   protected readonly logger = new Logger();
 
   constructor(

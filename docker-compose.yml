@@ -1,19 +1,29 @@
 # docker-compose.yml
-version: '3.8'
+networks:
+  box-network:
+    driver: bridge
+
 services:
-  nest.js:
+  box:
+    container_name: boilerplate
     build:
       context: ./
       dockerfile: ./Dockerfile
-    container_name: boilerplate-nestjs
+    environment:
+      LOG_FILE: false
+      NODE_ENV: ${NODE_ENV}
+      HTTP_PORT: ${HTTP_PORT}
+      DATABASE_URL: ${DATABASE_URL}
+      GRPC_PORT: ${GRPC_PORT}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+      DOCS_USER: ${DOCS_USER}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
     ports:
       - 3000:3000
     volumes:
       - ./:/home/app/boilerplate-nestjs
       - ./node_modules:/home/app/boilerplate-nestjs/node_modules
     networks:
-      - futbox-network
-networks:
-  futbox-network:
-    driver: bridge
-  
+      - box-network
+    restart: unless-stopped

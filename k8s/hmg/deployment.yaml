@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: box-boilerplate-deployment
+  namespace: cire-box
+  labels:
+    app: box-boilerplate
+spec:
+  selector:
+    matchLabels:
+      app: box-boilerplate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: box-boilerplate
+    spec:
+      containers:
+        - name: box-boilerplate
+          image: cirebox1995/boilerplate:latest
+          imagePullPolicy: Never
+          lifecycle:
+            preStop:
+              exec:
+                command: ['sleep', '40']
+          resources:
+            limits:
+              cpu: '500m'
+              memory: '1000Mi'
+            requests:
+              cpu: '250m'
+              memory: '500Mi'
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: box-secrets

@@ -6,24 +6,31 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
 import { SWAGGER_CONFIG } from './swagger/swagger.config';
 import { createSwaggerDocumentation } from 'src/swagger/swagger.create-document';
-import { json } from 'express';
+import * as express from 'express';
+import { join } from 'path';
 import * as basicAuth from 'express-basic-auth';
-// import { join } from 'path';
-// import { Transport } from '@nestjs/microservices';
+
+import { config } from 'dotenv-safe';
+config();
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication | any>(
+  const app = await NestFactory.create<NestExpressApplication>(
     AppModule,
     // {
     //   logger: LoggerFactory(),
     // },
   );
+
+  // Configura a pasta pública para servir arquivos estáticos
+  app.use('/assets', express.static(join(__dirname, '..', 'public/assets')));
+
   app.disable('x-powered-by');
   app.enableVersioning({
     type: VersioningType.HEADER,
     header: 'version',
   });
-  app.use(json({ limit: '200mb' }));
+
+  app.use(express.json({ limit: '200mb' }));
   app.enableCors();
   app.use(compression());
   app.useGlobalPipes(
@@ -62,14 +69,13 @@ async function bootstrap() {
 
   //  app.useWebSocketAdapter(new IoAdapter(app));
 
-
   const users = process.env.DOCS_USER;
   app.use(
-    "/docs*",
+    '/docs*',
     basicAuth({
       challenge: true,
-      users: JSON.parse(users as string)
-    })
+      users: JSON.parse(users as string),
+    }),
   );
 
   const start = process.env.NODE_ENV;
@@ -80,7 +86,7 @@ async function bootstrap() {
   app.startAllMicroservices();
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  await app.listen(process.env.HTTP_PORT || 3000);
+  await app.listen(process.env.HTTP_PORT ?? 3000);
 
   const url = await app.getUrl();
   console.log(`🚀 Application is running on: ${url} =>`, start);

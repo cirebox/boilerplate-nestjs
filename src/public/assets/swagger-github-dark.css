@@ -1,0 +1,6 @@
+/* Barra superior */
+.swagger-ui .topbar {
+  background-color: #24292e;
+  /* Fundo escuro da barra superior */
+  color: white;
+}

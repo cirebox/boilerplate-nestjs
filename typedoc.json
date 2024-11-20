@@ -1,0 +1,31 @@
+{
+  "out": "docs",
+  "readme": "README.md",
+  "includeVersion": false,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "hideGenerator": true,
+  "tsconfig": "./tsconfig.typedoc.json",
+  "name": "Documentação do Projeto",
+  "excludeNotDocumented": true,
+  "mergeModulesRenameDefaults": true,
+  "mergeModulesMergeMode": "module-category",
+  "categorizeByGroup": true,
+  "entryPoints": [
+    "src"
+  ],
+  "entryPointStrategy": "expand",
+  "plugin": [
+    "typedoc-plugin-merge-modules",
+    "typedoc-github-theme"
+  ],
+  "exclude": [
+    "**/*.tsx",
+    "**/*.spec.ts",
+    "**/test/**",
+    "test",
+    "node_modules",
+    "dist"
+  ],
+}

@@ -3,10 +3,20 @@
 //// ------------------------------------------------------
 
 Table exception {
-  id String [pk]
-  statusCode Int [not null]
-  message String [not null]
-  path String
-  stack String
-  createdAt DateTime [default: `now()`, not null]
+  id String [pk, note: 'ID único da exceção, gerado automaticamente em formato UUID.
+@format uuid']
+  statusCode Int [not null, note: 'Representa o código de status HTTP da exceção.
+Exemplo: 404 para "Não Encontrado", 500 para "Erro Interno do Servidor".']
+  message String [not null, note: 'Mensagem descritiva do erro ou exceção.
+Indica a natureza do problema encontrado.']
+  path String [note: 'Caminho ou rota onde o erro ocorreu, se aplicável.
+Este campo é opcional e pode ajudar a identificar o local exato no código que causou o erro.']
+  stack String [note: 'Stack trace do erro, útil para depuração.
+Este campo é opcional e pode fornecer informações detalhadas sobre o fluxo de execução.']
+  createdAt DateTime [default: `now()`, not null, note: 'Data e hora em que o erro foi registrado.
+Valor padrão é a data e hora atual.']
+
+  Note: '@namespace exception
+Tabela de exceções e erros, onde são registradas informações de erros ocorridos na aplicação.
+Cada registro representa uma exceção com detalhes do erro para fácil rastreamento e análise.'
 }

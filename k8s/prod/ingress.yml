@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: cire-box
+  name: box-boilerplate-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: cirebox
+    alb.ingress.kubernetes.io/load-balancer-name: cirebox-alb
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:881379168558:certificate/61e5af5e-a7c5-486f-a5b2-aad849226ea4
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+spec:
+  ingressClassName: alb
+  rules:
+    - host: box-boilerplate.cirebox.com.br
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: box-boilerplate-service
+              port:
+                number: 3000

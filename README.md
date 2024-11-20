@@ -4,68 +4,41 @@
 
 ## Description
 NestJS REST API boilerplate for a typical project
-
-## Table of Contents <!-- omit in toc -->
-
-- [Features](#features)
-- [Contributors](#contributors)
-- [Support](#support)
-- [DB Diagram](#dbdiagram)
-- [Installation](#installation)
-
 ## Features
-
 - [x] Prisma Database ORM.
 - [x] Seeding
 
 - [x] GRPC.
 - [x] RabbitMQ.
-
-- [x] Swagger
-
+- [ ] Social sign in (Apple, Facebook, Google, Twitter).
+- [ ] I18N ([nestjs-i18n](https://www.npmjs.com/package/nestjs-i18n)).
 - [ ] Mailing ([nodemailer](https://www.npmjs.com/package/nodemailer)).
 - [ ] File uploads. Support local and Amazon S3 drivers.
-
+- [x] TypeDocs
+- [x] Swagger
 - [x] Units tests.
 - [ ] E2E tests 
+- [] Docker.
+- [x] CI (Github Actions).
 
-- [ ] Docker.
-- [ ] CI (Github Actions).
+## Quick run
 
-## Contributors
+```bash
+git clone --depth 1 https://github.com/cirebox/boilerplate-nestjs.git
+cd boilerplate-nestjs
+cp .env.example .env
+docker-compose up -d
+```
 
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="14.28%">
-        <a href="https://github.com/Shchepotin">
-            <img src="https://avatars.githubusercontent.com/u/9134065?v=4?s=100" width="100px;" alt="Vladyslav Shchepotin"/>
-            <br />
-            <sub>
-                <b>Eric Pereira</b>
-            </sub>
-        </a><br />
-        <a href="#maintenance-Shchepotin" title="Maintenance">🚧</a> 
-        <a href="#doc-Shchepotin" title="Documentation">📖</a> 
-        <a href="#code-Shchepotin" title="Code">💻</a>
-        <a href="#business-sars" title="Business development">💼</a>
-      </td>      
-    </tr>
-  </tbody>
-</table>
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-<!-- ALL-CONTRIBUTORS-LIST:END -->
+For check status run
 
-## Support
-If you seek consulting, support, or wish to collaborate, please contact us via [suportecire@gmail.com](mailto:suportecire@gmail.com). For any inquiries regarding boilerplates, feel free to ask on [GitHub Discussions](https://github.com/cirebox/boilerplate-nestjs/discussions).
+```bash
+docker-compose logs
+```
 
 ## DBDiagram
 
-![image](prisma/diagrama.png)
+![image](prisma/ERD.svg)
 
 Generate diagram using [dbdiagram](https://dbdiagram.io/d) copying the contents of the dbml file
 
@@ -112,5 +85,36 @@ $ pnpm run test:e2e
 # test coverage
 $ pnpm run test:cov
 ```
+
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%">
+        <a href="https://github.com/Shchepotin">
+            <img src="https://avatars.githubusercontent.com/u/9134065?v=4?s=100" width="100px;" alt="Vladyslav Shchepotin"/>
+            <br />
+            <sub>
+                <b>Eric Pereira</b>
+            </sub>
+        </a><br />
+        <a href="#maintenance-Shchepotin" title="Maintenance">🚧</a> 
+        <a href="#doc-Shchepotin" title="Documentation">📖</a> 
+        <a href="#code-Shchepotin" title="Code">💻</a>
+        <a href="#business-sars" title="Business development">💼</a>
+      </td>      
+    </tr>
+  </tbody>
+</table>
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+## Support
+If you seek consulting, support, or wish to collaborate, please contact us via [suportecire@gmail.com](mailto:suportecire@gmail.com). For any inquiries regarding boilerplates, feel free to ask on [GitHub Discussions](https://github.com/cirebox/boilerplate-nestjs/discussions).
 
 Author - [Eric Pereira](https://portfolio-eric-pereira.vercel.app/)

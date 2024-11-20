@@ -2,14 +2,37 @@ generator client {
   provider = "prisma-client-js"
 }
 
-generator dbml {
-  provider = "prisma-dbml-generator"
-}
+// generator dbml {
+//   provider = "prisma-dbml-generator"
+// }
 
 // generator erd {
-//   provider = "prisma-erd-generator"
-//   output   = "./ERD.png"
-//   theme = "dark"
+//   provider                  = "prisma-erd-generator"
+//   // theme                     = "neutro" //"dark"
+//   disabled                  = false
+//   tableOnly                 = false
+//   ignoreEnums               = true
+//   includeRelationFromFields = true
+//   disableEmoji              = true
+//   erdDebug                  = false
+//   output                    = "./ERD.svg"
+//   mmdcPath                  = "node_modules/.bin"
+//   puppeteerConfig           = "prisma/config/puppeteerConfig.json"
+// }
+
+//https://dev.to/samchon/i-made-erd-and-documents-genertor-of-prisma-orm-4mgl
+// generator markdown {
+//   provider             = "prisma-markdown"
+//   title                = "erd"
+//   output               = "./ERD.md"
+//   // Ordena os modelos por ordem alfabética
+//   alphabeticalModels   = true
+//   // Inclui informações sobre as chaves estrangeiras e os relacionamentos entre tabelas
+//   includeRelations     = true
+//   // Insere uma tabela de conteúdo no início do documento para navegação rápida
+//   tableOfContents      = true
+//   // Inclui exemplos de dados para cada campo, se disponíveis
+//   includeFieldExamples = true
 // }
 
 datasource db {
@@ -22,13 +45,33 @@ datasource db {
 //   url      = env("DATABASE_URL")
 // }
 
+/// @namespace exception
+/// Tabela de exceções e erros, onde são registradas informações de erros ocorridos na aplicação.
+/// Cada registro representa uma exceção com detalhes do erro para fácil rastreamento e análise.
 model Exception {
-  id         String   @id @default(uuid()) @map("_id")
+  /// ID único da exceção, gerado automaticamente em formato UUID.
+  /// @format uuid
+  id String @id @default(uuid()) @map("_id")
+
+  /// Representa o código de status HTTP da exceção.
+  /// Exemplo: 404 para "Não Encontrado", 500 para "Erro Interno do Servidor".
   statusCode Int
-  message    String
-  path       String?
-  stack      String?
-  createdAt  DateTime @default(now())
+
+  /// Mensagem descritiva do erro ou exceção.
+  /// Indica a natureza do problema encontrado.
+  message String
+
+  /// Caminho ou rota onde o erro ocorreu, se aplicável.
+  /// Este campo é opcional e pode ajudar a identificar o local exato no código que causou o erro.
+  path String?
+
+  /// Stack trace do erro, útil para depuração.
+  /// Este campo é opcional e pode fornecer informações detalhadas sobre o fluxo de execução.
+  stack String?
+
+  /// Data e hora em que o erro foi registrado.
+  /// Valor padrão é a data e hora atual.
+  createdAt DateTime @default(now())
 
   @@map("exception")
 }

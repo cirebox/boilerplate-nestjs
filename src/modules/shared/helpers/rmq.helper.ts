@@ -4,8 +4,8 @@ import { Channel, connect, Connection } from 'amqplib';
 
 @Injectable()
 export class RmqHelper implements IQueueProvider, OnModuleInit {
-  private connection: Connection;
-  private channel: Channel;
+  private connection?: Connection;
+  private channel?: Channel;
   protected logger = new Logger();
 
   async onModuleInit() {
@@ -26,6 +26,6 @@ export class RmqHelper implements IQueueProvider, OnModuleInit {
       data: value,
     };
     const buffer = Buffer.from(JSON.stringify(content));
-    return this.channel.publish('amq.direct', routeKey, buffer, { priority });
+    return this.channel!.publish('amq.direct', routeKey, buffer, { priority });
   }
 }

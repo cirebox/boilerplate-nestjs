@@ -3,24 +3,21 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Logger,
   Param,
   Post,
   Put,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiTags,
-  ApiCreatedResponse,
-  ApiBadRequestResponse,
-  ApiUnauthorizedResponse,
-  ApiNotFoundResponse,
-  ApiForbiddenResponse,
   ApiBody,
-  ApiResponse,
   ApiParam,
   ApiExcludeEndpoint,
   ApiBearerAuth,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { FindByIdService } from '../services/find-by-id.service';
 import { FindService } from '../services/find.service';
@@ -31,7 +28,7 @@ import { ExceptionUpdateDto } from '../dtos/exception.update.dto';
 import { JwtGuard } from 'src/modules/shared/guards/jwt.guard';
 import { DeleteService } from '../services/delete.service';
 
-@ApiTags('exception')
+@ApiTags('Exception')
 @Controller('v1/exception')
 export class HttpController {
   protected logger = new Logger(HttpController.name);
@@ -44,37 +41,16 @@ export class HttpController {
     private readonly deleteService: DeleteService,
   ) {}
 
-  @ApiCreatedResponse({
-    status: 201,
-    description: 'Created. A new resource was successfully created.',
-  })
-  @ApiBadRequestResponse({
-    status: 400,
-    description: 'Bad Request. The request was invalid.',
-  })
-  @ApiUnauthorizedResponse({
-    status: 401,
-    description:
-      'Unauthorized. The request did not include an authentication token or the authentication token was expired.',
-  })
-  @ApiNotFoundResponse({
-    status: 402,
-    description:
-      'Payment Required. The requested did not include an payment accept.',
-  })
-  @ApiForbiddenResponse({
-    status: 403,
-    description:
-      'Forbidden. The client did not have permission to access the requested resource.',
-  })
-  @UseGuards(JwtGuard)
-  @ApiBearerAuth('authorization')
-  @ApiBody({ type: ExceptionCreateDto, required: true })
-  @ApiExcludeEndpoint()
+  // @ApiExcludeEndpoint()
   @Post('')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @ApiBody({ type: ExceptionCreateDto, required: true })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Criar uma nova exceção' })
   async create(@Body() data: ExceptionCreateDto): Promise<Core.ResponseData> {
     this.logger.verbose('gRPC | CategoryService | Create');
-    this.logger.verbose(`Category: ${data}`);
+    this.logger.verbose(`Category: ${JSON.stringify(data)}`);
     const response = await this.createService.execute(data);
     return {
       code: 201,
@@ -83,33 +59,13 @@ export class HttpController {
     };
   }
 
-  @ApiResponse({
-    status: 200,
-    description: 'Ok. the request was successfully completed.',
-  })
-  @ApiBadRequestResponse({
-    status: 400,
-    description: 'Bad Request. The request was invalid.',
-  })
-  @ApiUnauthorizedResponse({
-    status: 401,
-    description:
-      'Unauthorized. The request did not include an authentication token or the authentication token was expired.',
-  })
-  @ApiForbiddenResponse({
-    status: 403,
-    description:
-      'Forbidden. The client did not have permission to access the requested resource.',
-  })
-  @ApiNotFoundResponse({
-    status: 404,
-    description: 'Not Found. The requested resource was not found.',
-  })
-  @UseGuards(JwtGuard)
-  @ApiBearerAuth('authorization')
   @ApiExcludeEndpoint()
-  @ApiBody({ type: ExceptionUpdateDto, required: true })
   @Put('')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @ApiBody({ type: ExceptionUpdateDto, required: true })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Atualiza uma exceção' })
   async update(@Body() data: ExceptionUpdateDto): Promise<Core.ResponseData> {
     const response = await this.updateService.execute(data);
     return {
@@ -119,105 +75,43 @@ export class HttpController {
     };
   }
 
-  @ApiResponse({
-    status: 200,
-    description: 'Ok. the request was successfully completed.',
-  })
-  @ApiBadRequestResponse({
-    status: 400,
-    description: 'Bad Request. The request was invalid.',
-  })
-  @ApiUnauthorizedResponse({
-    status: 401,
-    description:
-      'Unauthorized. The request did not include an authentication token or the authentication token was expired.',
-  })
-  @ApiForbiddenResponse({
-    status: 403,
-    description:
-      'Forbidden. The client did not have permission to access the requested resource.',
-  })
-  @ApiNotFoundResponse({
-    status: 404,
-    description: 'Not Found. The requested resource was not found.',
-  })
-  @UseGuards(JwtGuard)
-  @ApiBearerAuth('authorization')
-  // @ApiExcludeEndpoint()
-  @ApiParam({ name: 'id', type: 'string', required: true })
-  @Get('/id/:id')
-  async findById(@Param('id') id: string): Promise<Core.ResponseData> {
-    const response = await this.findByIdService.execute(id);
-    return {
-      code: 200,
-      message: 'Registro encontrado com sucesso!',
-      data: response,
-    };
-  }
-
-  @ApiResponse({
-    status: 200,
-    description: 'Ok. the request was successfully completed.',
-  })
-  @ApiBadRequestResponse({
-    status: 400,
-    description: 'Bad Request. The request was invalid.',
-  })
-  @ApiUnauthorizedResponse({
-    status: 401,
-    description:
-      'Unauthorized. The request did not include an authentication token or the authentication token was expired.',
-  })
-  @ApiForbiddenResponse({
-    status: 403,
-    description:
-      'Forbidden. The client did not have permission to access the requested resource.',
-  })
-  @ApiNotFoundResponse({
-    status: 404,
-    description: 'Not Found. The requested resource was not found.',
-  })
-  @UseGuards(JwtGuard)
-  @ApiBearerAuth('authorization')
-  // @ApiExcludeEndpoint()
-  @ApiParam({ name: 'id', type: 'string', required: true })
   @Delete(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @ApiParam({ name: 'id', type: 'string', required: true })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remove uma exceção' })
   async deleteById(@Param('id') id: string): Promise<Core.ResponseData> {
     const response = await this.deleteService.execute(id);
     return {
-      code: 200,
+      code: HttpStatus.OK,
       message: 'Removido com sucesso!',
       data: response,
     };
   }
 
-  @ApiResponse({
-    status: 200,
-    description: 'Ok. the request was successfully completed.',
-  })
-  @ApiBadRequestResponse({
-    status: 400,
-    description: 'Bad Request. The request was invalid.',
-  })
-  @ApiUnauthorizedResponse({
-    status: 401,
-    description:
-      'Unauthorized. The request did not include an authentication token or the authentication token was expired.',
-  })
-  @ApiForbiddenResponse({
-    status: 403,
-    description:
-      'Forbidden. The client did not have permission to access the requested resource.',
-  })
-  @ApiNotFoundResponse({
-    status: 404,
-    description: 'Not Found. The requested resource was not found.',
-  })
+  @Get('/id/:id')
   @UseGuards(JwtGuard)
-  @ApiBearerAuth('authorization')
+  @ApiBearerAuth('JWT')
+  @ApiParam({ name: 'id', type: 'string', required: true })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Buscar exceção por ID' })
+  async findById(@Param('id') id: string): Promise<Core.ResponseData> {
+    const response = await this.findByIdService.execute(id);
+    return {
+      code: HttpStatus.OK,
+      message: 'Registro encontrado com sucesso!',
+      data: response,
+    };
+  }
+
   @Get('')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Buscar todas as exceção' })
   async find(): Promise<Core.ResponseData> {
     const response = await this.findService.execute();
-    return { code: 200, message: '', data: response };
+    return { code: HttpStatus.OK, message: '', data: response };
   }
 }

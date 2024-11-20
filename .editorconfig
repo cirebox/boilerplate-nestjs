@@ -1,0 +1,51 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# Root file
+root = true
+
+# Apply to all files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# 2 space indentation
+[*.{js,jsx,ts,tsx,json,html,css}]
+indent_style = space
+indent_size = 2
+
+# 4 space indentation for markdown files
+[*.md]
+indent_style = space
+indent_size = 4
+
+# YAML files
+[*.yml]
+indent_style = space
+indent_size = 2
+
+# Python files
+[*.py]
+indent_style = space
+indent_size = 4
+
+# C/C++ files
+[*.{c,h,cpp,hpp}]
+indent_style = space
+indent_size = 4
+
+# Go files
+[*.go]
+indent_style = tab
+indent_size = 4
+
+# Java files
+[*.java]
+indent_style = space
+indent_size = 4
+
+# Specific settings for test files
+[*.test.ts]
+indent_style = space
+indent_size = 2

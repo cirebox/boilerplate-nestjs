@@ -7,6 +7,7 @@ import { RolesGuard } from './modules/shared/guards/roles.guard';
 import { HealthModule } from './modules/health/health.module';
 import { ExceptionModule } from './modules/exception/exception.module';
 import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { ConfigModule } from '@nestjs/config';
     }),
     SharedModule,
     HealthModule,
-    ExceptionModule
+    ExceptionModule,
   ],
   providers: [
     {
@@ -31,5 +32,6 @@ import { ConfigModule } from '@nestjs/config';
       useClass: RolesGuard,
     },
   ],
+  controllers: [AppController],
 })
-export class AppModule { }
+export class AppModule {}

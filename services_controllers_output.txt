@@ -1,0 +1,305 @@
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/app.controller.ts
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+
+@Controller()
+export class AppController {
+  @Get('/')
+  @HttpCode(HttpStatus.OK)
+  find() {
+    return 'Boilerplate Only';
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/exception/controllers/http.controller.ts
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpStatus,
+  Logger,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+  HttpCode,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBody,
+  ApiParam,
+  ApiExcludeEndpoint,
+  ApiBearerAuth,
+  ApiOperation
+} from '@nestjs/swagger';
+import { FindByIdService } from '../services/find-by-id.service';
+import { FindService } from '../services/find.service';
+import { UpdateService } from '../services/update.service';
+import { CreateService } from '../services/create.service';
+import { ExceptionCreateDto } from '../dtos/exception.create.dto';
+import { ExceptionUpdateDto } from '../dtos/exception.update.dto';
+import { JwtGuard } from 'src/modules/shared/guards/jwt.guard';
+import { DeleteService } from '../services/delete.service';
+
+@ApiTags('Exception')
+@Controller('v1/exception')
+export class HttpController {
+  protected logger = new Logger(HttpController.name);
+
+  constructor(
+    private readonly createService: CreateService,
+    private readonly updateService: UpdateService,
+    private readonly findService: FindService,
+    private readonly findByIdService: FindByIdService,
+    private readonly deleteService: DeleteService,
+  ) { }
+
+  // @ApiExcludeEndpoint()
+  @Post('')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @ApiBody({ type: ExceptionCreateDto, required: true })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Criar uma nova exceção' })
+  async create(@Body() data: ExceptionCreateDto): Promise<Core.ResponseData> {
+    this.logger.verbose('gRPC | CategoryService | Create');
+    this.logger.verbose(`Category: ${JSON.stringify(data)}`);
+    const response = await this.createService.execute(data);
+    return {
+      code: 201,
+      message: 'Registro criado com sucesso!',
+      data: response,
+    };
+  }
+
+  @ApiExcludeEndpoint()
+  @Put('')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @ApiBody({ type: ExceptionUpdateDto, required: true })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Atualiza uma exceção' })
+  async update(@Body() data: ExceptionUpdateDto): Promise<Core.ResponseData> {
+    const response = await this.updateService.execute(data);
+    return {
+      code: 201,
+      message: 'Registro atualizado com sucesso',
+      data: response,
+    };
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @ApiParam({ name: 'id', type: 'string', required: true })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remove uma exceção' })
+  async deleteById(@Param('id') id: string): Promise<Core.ResponseData> {
+    const response = await this.deleteService.execute(id);
+    return {
+      code: HttpStatus.OK,
+      message: 'Removido com sucesso!',
+      data: response,
+    };
+  }
+
+  @Get('/id/:id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @ApiParam({ name: 'id', type: 'string', required: true })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Buscar exceção por ID' })
+  async findById(@Param('id') id: string): Promise<Core.ResponseData> {
+    const response = await this.findByIdService.execute(id);
+    return {
+      code: HttpStatus.OK,
+      message: 'Registro encontrado com sucesso!',
+      data: response,
+    };
+  }
+
+  @Get('')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Buscar todas as exceção' })
+  async find(): Promise<Core.ResponseData> {
+    const response = await this.findService.execute();
+    return { code: HttpStatus.OK, message: '', data: response };
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/exception/services/create.service.ts
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ExceptionCreateDto } from '../dtos/exception.create.dto';
+import { IExceptionRepository } from 'src/modules/shared/repositories/interfaces/iexception.repository';
+
+@Injectable()
+export class CreateService {
+  constructor(
+    @Inject('IExceptionRepository')
+    private readonly exceptionRepository: IExceptionRepository,
+  ) {}
+
+  private readonly logger = new Logger(CreateService.name);
+
+  async execute(
+    data: ExceptionCreateDto,
+  ): Promise<Partial<ApiTypes.Exception>> {
+    this.logger.debug('Create', data);
+    return await this.exceptionRepository.create(data);
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/exception/services/delete.service.ts
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { IExceptionRepository } from 'src/modules/shared/repositories/interfaces/iexception.repository';
+
+@Injectable()
+export class DeleteService {
+  constructor(
+    @Inject('IExceptionRepository')
+    private readonly exceptionRepository: IExceptionRepository,
+  ) {}
+
+  private readonly logger = new Logger(DeleteService.name);
+
+  async execute(id: string): Promise<Partial<ApiTypes.Exception>> {
+    this.logger.debug('DeleteById', id);
+    return await this.exceptionRepository.delete(id);
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/exception/services/find-by-id.service.ts
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { IExceptionRepository } from 'src/modules/shared/repositories/interfaces/iexception.repository';
+
+@Injectable()
+export class FindByIdService {
+  constructor(
+    @Inject('IExceptionRepository')
+    private readonly exceptionRepository: IExceptionRepository,
+  ) {}
+
+  private readonly logger = new Logger(FindByIdService.name);
+
+  async execute(id: string): Promise<Partial<ApiTypes.Exception>> {
+    this.logger.debug('FindById', id);
+    return await this.exceptionRepository.findById(id);
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/exception/services/find.service.ts
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { IExceptionRepository } from 'src/modules/shared/repositories/interfaces/iexception.repository';
+
+@Injectable()
+export class FindService {
+  constructor(
+    @Inject('IExceptionRepository')
+    private readonly exceptionRepository: IExceptionRepository,
+  ) {}
+
+  private readonly logger = new Logger(FindService.name);
+
+  async execute(): Promise<Partial<ApiTypes.Exception>[]> {
+    this.logger.debug('findAll');
+    return await this.exceptionRepository.find();
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/exception/services/update.service.ts
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ExceptionUpdateDto } from '../dtos/exception.update.dto';
+import { IExceptionRepository } from 'src/modules/shared/repositories/interfaces/iexception.repository';
+
+@Injectable()
+export class UpdateService {
+  constructor(
+    @Inject('IExceptionRepository')
+    private readonly exceptionRepository: IExceptionRepository,
+  ) {}
+
+  private readonly logger = new Logger(UpdateService.name);
+
+  async execute(
+    data: ExceptionUpdateDto,
+  ): Promise<Partial<ApiTypes.Exception>> {
+    this.logger.debug('Update', data);
+    return await this.exceptionRepository.update(data);
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/health/health.controller.ts
+import { Controller, Get, UseFilters } from '@nestjs/common';
+import {
+  HealthCheck,
+  HealthCheckService,
+  MicroserviceHealthIndicator,
+  PrismaHealthIndicator,
+} from '@nestjs/terminus';
+import { ApiHealthIndicator } from './health.indicator';
+import { Transport } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
+import { HealthCheckExceptionFilter } from './health-check-exception-filter';
+import { PrismaService } from '../shared/services/prisma.service';
+
+@Controller('health')
+export class HealthController {
+  public constructor(
+    private readonly health: HealthCheckService,
+    private readonly api: ApiHealthIndicator,
+    private readonly prisma: PrismaHealthIndicator,
+    private readonly prismaService: PrismaService,
+    private readonly microservice: MicroserviceHealthIndicator,
+  ) {}
+
+  @Get()
+  @UseFilters(HealthCheckExceptionFilter)
+  @HealthCheck()
+  public check() {
+    const configService = new ConfigService();
+    return this.health.check([
+      () => this.api.pingCheck('api'),
+      () => this.prisma.pingCheck('prisma', this.prismaService),
+      () =>
+        this.microservice.pingCheck('message_broker', {
+          transport: Transport.RMQ,
+          options: {
+            urls: `${configService.get('RABBITMQ_URL')}`,
+            queueOptions: { durable: true },
+            persistent: true,
+          },
+        }),
+    ]);
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/shared/services/extract-token-from-header.service.ts
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class ExtractTokenFromHeaderService {
+  execute(request: any): string | undefined {
+    const [type, token] = request.headers?.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
+  }
+}
+
+
+// File: /root/projetos/cirebox/cire-box/boilerplate-nestjs/src/modules/shared/services/prisma.service.ts
+import { Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient {}
+
+

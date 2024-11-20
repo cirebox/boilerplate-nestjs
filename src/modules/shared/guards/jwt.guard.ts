@@ -2,17 +2,15 @@
 import {
   ExecutionContext,
   Injectable,
-  UnauthorizedException,
   Logger,
   CanActivate,
 } from '@nestjs/common';
-import { jwtConstants } from '../config/constants/jwt.contants';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
   protected logger = new Logger(JwtGuard.name);
-  constructor(private jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext) {
     //Liberar tudo por enquanto
