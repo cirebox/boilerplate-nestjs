@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "type-check": "tsc -b",
     "lint": "eslint './src/**/*.ts' --fix --config eslint.config.mjs",
     "lint:check": "eslint './src/**/*.ts' --config eslint.config.mjs",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
