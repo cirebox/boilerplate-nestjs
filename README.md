@@ -107,3 +107,6 @@ $ pnpm run test:cov
 If you seek consulting, support, or wish to collaborate, please contact us via [suportecire@gmail.com](mailto:suportecire@gmail.com). For any inquiries regarding boilerplates, feel free to ask on [GitHub Discussions](https://github.com/cirebox/boilerplate-nestjs/discussions).
 
 Author - [Eric Pereira](https://portfolio-eric-pereira.vercel.app/)
+
+ 
+<p><a href="https://www.buymeacoffee.com/ericpereiri"> <img align="left" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="50" width="210" alt="wetty1" /></a></p><br><br>
