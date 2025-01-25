@@ -1,13 +1,12 @@
-# NestJS REST API boilerplate CIREBOX
+# NestJS boilerplate
 
 [![image](https://github.com/brocoders/nestjs-boilerplate/assets/72293912/197da43e-02f4-4895-8d3e-b7a42a591c26)](https://github.com/new?template_name=boilerplate-nestjs&template_owner=cirebox)
 
 ## Description
-NestJS REST API boilerplate for a typical project
+NestJS boilerplate for a typical project
 ## Features
 - [x] Prisma Database ORM.
 - [x] Seeding
-
 - [x] GRPC.
 - [x] RabbitMQ.
 - [ ] Social sign in (Apple, Facebook, Google, Twitter).
@@ -18,7 +17,8 @@ NestJS REST API boilerplate for a typical project
 - [x] Swagger
 - [x] Units tests.
 - [ ] E2E tests 
-- [] Docker.
+- [ ] Docker.
+- [x] Husky.
 - [x] CI (Github Actions).
 
 ## Quick run
@@ -36,26 +36,15 @@ For check status run
 docker-compose logs
 ```
 
-## DBDiagram
+## [Architecture](/doc/architecture.md)
 
-![image](prisma/ERD.svg)
-
-Generate diagram using [dbdiagram](https://dbdiagram.io/d) copying the contents of the dbml file
 
 ## Installation
 ```bash
 $ pnpm install
 ```
 
-## DB Generate
-```bash
-$ npx prisma generate
-```
-
-## Seed
-```bash
-$ npx prisma db seed
-```
+### About the [database](/doc/db.md)
 
 ## Running
 
