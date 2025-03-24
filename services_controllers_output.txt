@@ -268,16 +268,7 @@ export class HealthController {
     const configService = new ConfigService();
     return this.health.check([
       () => this.api.pingCheck('api'),
-      () => this.prisma.pingCheck('prisma', this.prismaService),
-      () =>
-        this.microservice.pingCheck('message_broker', {
-          transport: Transport.RMQ,
-          options: {
-            urls: `${configService.get('RABBITMQ_URL')}`,
-            queueOptions: { durable: true },
-            persistent: true,
-          },
-        }),
+      () => this.prisma.pingCheck('prisma', this.prismaService),      
     ]);
   }
 }

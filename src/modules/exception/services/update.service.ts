@@ -9,7 +9,7 @@ export class UpdateService {
     private readonly exceptionRepository: IExceptionRepository,
   ) {}
 
-  private readonly logger = new Logger(UpdateService.name);
+  protected readonly logger = new Logger(this.constructor.name);
 
   async execute(
     data: ExceptionUpdateDto,

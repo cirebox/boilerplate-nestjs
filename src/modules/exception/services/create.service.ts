@@ -9,7 +9,7 @@ export class CreateService {
     private readonly exceptionRepository: IExceptionRepository,
   ) {}
 
-  private readonly logger = new Logger(CreateService.name);
+  protected readonly logger = new Logger(this.constructor.name);
 
   async execute(
     data: ExceptionCreateDto,

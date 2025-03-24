@@ -8,7 +8,7 @@ export class FindByIdService {
     private readonly exceptionRepository: IExceptionRepository,
   ) {}
 
-  private readonly logger = new Logger(FindByIdService.name);
+  protected readonly logger = new Logger(this.constructor.name);
 
   async execute(id: string): Promise<Partial<ApiTypes.Exception>> {
     this.logger.debug('FindById', id);
