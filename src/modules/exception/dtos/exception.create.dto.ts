@@ -1,22 +1,34 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDefined, IsString, IsNumber } from 'class-validator';
+import {
+  RequiredNumber,
+  RequiredString,
+  OptionalString,
+} from '../../../core/decorators/validation.decorators';
 
 export class ExceptionCreateDto implements Partial<ApiTypes.Exception> {
-  @IsDefined()
-  @IsNumber()
-  @ApiProperty({ required: true, default: 500 })
+  @RequiredNumber({
+    default: 500,
+    description: 'Código de status HTTP',
+    min: 100,
+    max: 599,
+  })
   statusCode: number;
 
-  @IsDefined()
-  @IsString()
-  @ApiProperty({ required: true, default: '' })
+  @RequiredString({
+    description: 'Mensagem descritiva do erro',
+    minLength: 3,
+    maxLength: 255,
+  })
   message: string;
 
-  @IsString()
-  @ApiProperty({ required: false, default: 'v1/exception' })
+  @OptionalString({
+    description: 'Caminho ou rota onde o erro ocorreu',
+    example: 'v1/exception',
+  })
   path?: string;
 
-  @IsString()
-  @ApiProperty({ required: false, default: '' })
+  @OptionalString({
+    description: 'Stack trace do erro',
+    maxLength: 2000,
+  })
   stack?: string;
 }

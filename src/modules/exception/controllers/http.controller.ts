@@ -10,6 +10,7 @@ import {
   Put,
   UseGuards,
   HttpCode,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import {
   ApiExcludeEndpoint,
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { FindByIdService } from '../services/find-by-id.service';
 import { FindService } from '../services/find.service';
@@ -27,6 +29,7 @@ import { ExceptionCreateDto } from '../dtos/exception.create.dto';
 import { ExceptionUpdateDto } from '../dtos/exception.update.dto';
 import { JwtGuard } from 'src/modules/shared/guards/jwt.guard';
 import { DeleteService } from '../services/delete.service';
+import { ExceptionFilterDto } from '../dtos/exception.filter.dto';
 
 @ApiTags('Exception')
 @Controller('v1/exception')
@@ -108,10 +111,11 @@ export class HttpController {
   @Get('')
   @UseGuards(JwtGuard)
   @ApiBearerAuth('JWT')
+  @ApiQuery({ type: ExceptionFilterDto, required: true })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Buscar todas as exceção' })
-  async find(): Promise<Core.ResponseData> {
-    const response = await this.findService.execute();
+  async find(@Query() params: ExceptionFilterDto): Promise<Core.ResponseData> {
+    const response = await this.findService.execute(params);
     return { code: HttpStatus.OK, message: '', data: response };
   }
 }
