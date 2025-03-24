@@ -1,33 +1,82 @@
 name: CI Pipeline
 on:
   push:
-    branches:
-      - main
+    branches: [ main, develop ]
   pull_request:
-    branches:
-      - main
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Executa semanalmente no domingo à meia-noite
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+      
+      # Executa scan nas dependências com npm audit
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: Lint code
         run: npm run lint
 
       - name: Run tests
         run: npm test
+
+      # Executa Snyk para verificar vulnerabilidades nas dependências
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+       # Executa SonarCloud para análise estática de código
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    
+
+       # Digitaliza código-fonte para segredos expostos
+      - name: Detect secrets in code
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+
+      # Análise de dependências com OWASP Dependency-Check
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'NestJS-Microservice-Boilerplate'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          args: >
+            --suppression suppression.xml
+            --failOnCVSS 7
+            --enableRetired
+        
+      # Salva os relatórios como artefatos
+      - name: Upload vulnerability reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: vulnerability-reports
+          path: |
+            reports/
+            snyk-result.json
 
       - name: Generate Prisma docs
         run: npx prisma generate

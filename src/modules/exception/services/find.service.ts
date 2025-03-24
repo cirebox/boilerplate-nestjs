@@ -6,7 +6,7 @@ export class FindService {
   constructor(
     @Inject('IExceptionRepository')
     private readonly exceptionRepository: IExceptionRepository,
-  ) {}
+  ) { }
 
   protected readonly logger = new Logger(this.constructor.name);
 
