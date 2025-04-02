@@ -23,9 +23,61 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
+      # Cache para node_modules
+      - name: Cache node modules
+        uses: actions/cache@v3
+        id: cache-nodemodules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+            
+      # Cache para o Prisma client gerado
+      - name: Cache Prisma
+        uses: actions/cache@v3
+        id: cache-prisma
+        with:
+          path: |
+            node_modules/.prisma
+            node_modules/@prisma/client
+          key: ${{ runner.os }}-prisma-${{ hashFiles('**/prisma/schema.prisma') }}
+          restore-keys: |
+            ${{ runner.os }}-prisma-
+
+      # Cache para cobertura de testes
+      - name: Cache Jest
+        uses: actions/cache@v3
+        with:
+          path: |
+            coverage
+            .jest-cache
+          key: ${{ runner.os }}-jest-${{ hashFiles('**/jest.config.ts') }}-${{ hashFiles('**/*.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-jest-
+            
+      # Cache para ESLint
+      - name: Cache ESLint
+        uses: actions/cache@v3
+        with:
+          path: .eslintcache
+          key: ${{ runner.os }}-eslint-${{ hashFiles('**/eslint.config.mjs') }}-${{ hashFiles('**/*.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-eslint-
+            
+      # Cache para TypeScript
+      - name: Cache TypeScript
+        uses: actions/cache@v3
+        with:
+          path: .tsbuildinfo
+          key: ${{ runner.os }}-tsbuildinfo-${{ hashFiles('**/tsconfig.json') }}-${{ hashFiles('**/*.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-tsbuildinfo-
+
       - name: Install dependencies
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
         run: npm ci
-      
+        
       # Executa scan nas dependências com npm audit
       - name: Run npm audit
         run: npm audit --audit-level=high
@@ -110,6 +162,22 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.7.0'
+      
+      # Cache para arquivos do Terraform
+      - name: Cache Terraform
+        uses: actions/cache@v3
+        with:
+          path: |
+            terraform/.terraform
+            ~/.terraform.d/plugin-cache
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/terraform/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
+      - name: Configure Terraform plugin cache
+        run: |
+          mkdir -p ~/.terraform.d/plugin-cache
+          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
 
       - name: Terraform Init
         run: |
@@ -145,6 +213,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -160,8 +236,9 @@ jobs:
           push: false
           load: true
           tags: nestjs-boilerplate:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,scope=${{ github.workflow }},mode=max
+          outputs: type=docker,dest=/tmp/image.tar
 
       - name: Test container
         run: |
@@ -174,8 +251,8 @@ jobs:
           file: ./Dockerfile.prod
           push: ${{ secrets.DOCKERHUB_USERNAME != '' }}
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/nestjs-boilerplate:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,scope=${{ github.workflow }},mode=max
         if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         
       - name: Save Docker image as artifact
