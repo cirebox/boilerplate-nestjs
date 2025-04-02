@@ -1,0 +1,181 @@
+# Configurações do Grafana para o Helm Chart
+# Este arquivo define as configurações do Grafana que será instalado no cluster Kubernetes
+
+adminUser: admin
+# A senha do administrador será definida por uma variável de ambiente ou gerada automaticamente
+adminPassword: "${GRAFANA_ADMIN_PASSWORD}"
+
+# Persistência para manter os dados do Grafana mesmo após reinicialização
+persistence:
+  enabled: true
+  storageClassName: do-block-storage
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+# Configuração de plugins necessários
+plugins:
+  - grafana-piechart-panel
+  - grafana-clock-panel
+  - grafana-kubernetes-app
+  - grafana-digitalocean-datasource
+
+# Configuração de DataSources
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.monitoring.svc.cluster.local
+      access: proxy
+      isDefault: true
+    - name: DigitalOcean
+      type: grafana-digitalocean-datasource
+      jsonData:
+        token: "${DIGITALOCEAN_MONITORING_TOKEN}"
+    - name: Loki
+      type: loki
+      url: http://loki-gateway.monitoring.svc.cluster.local
+      access: proxy
+
+# Dashboards pré-configurados
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      editable: true
+      options:
+        path: /var/lib/grafana/dashboards/default
+
+# Criação de dashboards padrão
+dashboards:
+  default:
+    # Dashboard para monitoramento do cluster Kubernetes
+    kubernetes-cluster:
+      gnetId: 7249
+      revision: 1
+      datasource: Prometheus
+    # Dashboard para monitoramento de recursos do cluster
+    kubernetes-resources:
+      gnetId: 7249
+      revision: 1
+      datasource: Prometheus
+    # Dashboard para monitoramento de recursos da aplicação NestJS
+    nestjs-app:
+      gnetId: 14110
+      revision: 1
+      datasource: Prometheus
+    # Dashboard para monitoramento do banco de dados PostgreSQL
+    postgresql:
+      gnetId: 9628
+      revision: 1
+      datasource: Prometheus
+    # Dashboard para monitoramento de custo do DigitalOcean
+    digitalocean-cost:
+      gnetId: 13018
+      revision: 1
+      datasource: DigitalOcean
+
+# Configuração de alertas
+alerting:
+  enabled: true
+  # Configurações para o Alertmanager
+  alertmanagers:
+    - staticConfigs:
+        - targets:
+            - alertmanager.monitoring.svc.cluster.local:9093
+
+# Configuração de notificações
+notifiers:
+  notifiers.yaml:
+    notifiers:
+      - name: slack-notifications
+        type: slack
+        uid: slack1
+        org_id: 1
+        is_default: true
+        send_reminder: true
+        frequency: 15m
+        disable_resolve_message: false
+        settings:
+          recipient: "#alerts"
+          token: "${SLACK_API_TOKEN}"
+          uploadImage: true
+          url: "${SLACK_WEBHOOK_URL}"
+      - name: email-notifications
+        type: email
+        uid: email1
+        org_id: 1
+        is_default: false
+        settings:
+          addresses: "${ALERT_EMAIL}"
+
+# Configuração de recursos
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Configurações de serviço
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"
+
+# Configurações de ingress para expor o Grafana externamente
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: grafana.${DOMAIN_NAME}
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.${DOMAIN_NAME}
+
+# Configurações adicionais do Grafana
+grafana.ini:
+  server:
+    domain: grafana.${DOMAIN_NAME}
+    root_url: https://grafana.${DOMAIN_NAME}
+  auth:
+    disable_login_form: false
+  auth.anonymous:
+    enabled: false
+  auth.basic:
+    enabled: true
+  smtp:
+    enabled: true
+    host: "${SMTP_HOST}:${SMTP_PORT}"
+    user: "${SMTP_USER}"
+    password: "${SMTP_PASSWORD}"
+    from_address: "${SMTP_FROM_ADDRESS}"
+    from_name: "Grafana Alerts"
+  analytics:
+    check_for_updates: true
+    reporting_enabled: false
+  security:
+    # Desabilitar scripts externos para maior segurança
+    disable_gravatar: true
+    data_source_proxy_whitelist: 
+    cookie_secure: true
+    cookie_samesite: lax
+

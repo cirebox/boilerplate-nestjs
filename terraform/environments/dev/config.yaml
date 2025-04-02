@@ -1,0 +1,237 @@
+# Configuração do ambiente de desenvolvimento
+provider:
+  # Provider ativo: "digitalocean", "aws", "gcp", "local"
+  active: "digitalocean"
+  
+  # Configurações do DigitalOcean
+  digitalocean:
+    # Token armazenado em arquivo seguro ou variável de ambiente DIGITALOCEAN_TOKEN
+    token_file: "~/.digitalocean/token"
+    region: "nyc1"
+    # Opção para acesso a APIs específicas
+    api_endpoints:
+      kubernetes: "${env:DO_KUBERNETES_ENDPOINT}"
+    # Configurações para Spaces (S3-compatible)
+    spaces:
+      enable: true
+      name: "boilerplate-nestjs-dev"
+      region: "nyc3"
+    
+  # Configurações da AWS
+  aws:
+    # Perfil configurado no ~/.aws/credentials
+    profile: "default"
+    region: "us-east-1"
+    secondary_region: "us-west-2" # Para disaster recovery
+    # Configurações de estado remoto
+    state_bucket: "boilerplate-nestjs-terraform-state"
+    state_key: "dev/terraform.tfstate"
+    state_dynamodb_table: "terraform-state-lock"
+    # Configurações avançadas
+    assume_role_arn: "${env:AWS_ASSUME_ROLE_ARN}"
+    external_id: "${env:AWS_EXTERNAL_ID}"
+    skip_metadata_check: true
+    skip_region_validation: false
+  
+  # Configurações da GCP
+  gcp:
+    # Arquivo de credenciais JSON
+    credentials_file: "~/.gcp/credentials.json"
+    project: "boilerplate-nestjs-dev"
+    region: "us-central1"
+    zone: "us-central1-a"
+    # Billing account para orçamentos
+    billing_account_id: "${env:GCP_BILLING_ACCOUNT_ID}"
+    # Permissões e APIs adicionais
+    enable_apis:
+      - "container.googleapis.com"
+      - "compute.googleapis.com"
+      - "cloudbilling.googleapis.com"
+      - "monitoring.googleapis.com"
+  
+  # Configurações do ambiente local
+  local:
+    docker_host: "unix:///var/run/docker.sock"
+    project_name: "nestjs-boilerplate-dev"
+    deploy_app: true
+    # Configurações opcionais para Docker remoto
+    docker_remote_host: "${env:DOCKER_HOST}"
+    docker_cert_path: "${env:DOCKER_CERT_PATH}"
+    # Configuração para Docker registry
+    docker_registry:
+      address: "registry.hub.docker.com"
+      username: "${env:DOCKER_REGISTRY_USER}"
+      password: "${env:DOCKER_REGISTRY_PASSWORD}"
+    # Configurações para testes
+    enable_integration_testing: true
+    test_port_range_start: 32000
+    test_port_range_end: 32999
+
+# Configuração de rede
+network:
+  vpc_cidr: "10.0.0.0/16"
+  subnet_count: 3
+  create_nat_gateway: false # Para economia de custos no ambiente dev
+  # Configurações específicas por provedor
+  aws:
+    use_private_subnets: true
+    enable_vpc_flow_logs: false # Para economia de custos no ambiente dev
+    transit_gateway_id: "${env:AWS_TRANSIT_GATEWAY_ID}"
+  gcp:
+    enable_private_ip: true
+    shared_vpc_host: "${env:GCP_SHARED_VPC_HOST}"
+  digitalocean:
+    enable_vpc_firewall: true
+    allow_ips: ["${env:OFFICE_IP}/32"]
+
+# Configuração do banco de dados
+database:
+  engine: "postgres"
+  engine_version: "14"
+  instance_type: "db-s-1vcpu-1gb" # DigitalOcean
+  storage_gb: 20
+  max_allocated_storage: 100
+  backup_retention_days: 3
+  skip_final_snapshot: true # Para ambiente dev
+  deletion_protection: false # Para ambiente dev
+  # Configurações específicas para ambiente local
+  local:
+    port: 5432
+    username: "postgres"
+    password: "postgres" # Apenas para dev local, usar variáveis de ambiente em produção
+    database_name: "nestjs"
+  # Parâmetros específicos por provedor
+  aws:
+    parameter_group_family: "postgres14"
+    multi_az: false # Para economia de custos no ambiente dev
+    storage_type: "gp3"
+    custom_parameters:
+      - name: "shared_buffers"
+        value: "256MB"
+      - name: "max_connections"
+        value: "100"
+  gcp:
+    tier: "db-custom-1-3840"
+    availability_type: "ZONAL" # Para economia de custos no ambiente dev
+    backup_start_time: "04:00"
+  digitalocean:
+    node_count: 1 # Para ambiente dev
+    private_network_uuid: "${env:DO_PRIVATE_NETWORK_ID}"
+
+# Configuração do Kubernetes
+kubernetes:
+  version: "1.26"
+  node_instance_types: ["s-2vcpu-2gb"] # DigitalOcean
+  min_nodes: 1
+  max_nodes: 3
+  desired_nodes: 1
+  auto_scaling: true
+  # Configurações específicas para ambiente local
+  local:
+    app_port: 3000
+    app_image: "node:18-alpine"
+    # Configurações adicionais para K8s local
+    enable_kind: true # Usar Kind para K8s local
+    kind_cluster_name: "boilerplate-nestjs-dev"
+    kind_config_path: "./kind-config.yaml"
+  # Configurações específicas por provedor
+  aws:
+    cluster_logging: ["api", "audit"]
+    fargate_enabled: false
+    spot_enabled: true # Para economia de custos no ambiente dev
+  gcp:
+    enable_autopilot: false
+    enable_workload_identity: true
+    maintenance_window: "00:00-04:00"
+  digitalocean:
+    vpc_uuid: "${env:DO_VPC_ID}"
+    auto_upgrade: true
+    surge_upgrade: true
+
+# Configuração de monitoramento de custos
+cost:
+  budget_amount: 100
+  budget_currency: "USD"
+  alert_threshold_percent: 80
+  alert_emails: ["${env:ALERT_EMAIL}"]
+  enable_cost_explorer: true
+  cost_allocation_tags: ["Project", "Environment"]
+  # Configurações específicas por provedor
+  aws:
+    create_budget: true
+    create_cost_anomaly_detection: true
+  gcp:
+    create_budget: true
+    budget_thresholds: [50, 80, 100]
+  digitalocean:
+    alert_threshold_monthly: 100
+    
+# Configuração de métricas e logs
+monitoring:
+  enable_metrics: true
+  retention_days: 7
+  alert_threshold_cpu: 80
+  alert_threshold_memory: 80
+  namespace: "default"
+  # Configurações específicas para DigitalOcean
+  digitalocean:
+    service_name: "boilerplate-nestjs-dev-service"
+    cluster_name: "boilerplate-nestjs-dev-cluster"
+    service_endpoint: "${env:SERVICE_HEALTH_ENDPOINT}"
+    slack_channel: "monitoring-alerts"
+    enable_uptime_checks: true
+  # Configurações específicas para AWS
+  aws:
+    cloudwatch_log_group: "boilerplate-nestjs-dev"
+    cloudwatch_log_retention: 7
+    alarms_sns_topic: "boilerplate-nestjs-dev-alarms"
+    enable_xray_tracing: true
+    enable_synthetic_monitoring: false # Para economia de custos no ambiente dev
+  # Configurações específicas para GCP
+  gcp:
+    logging_name: "boilerplate-nestjs-dev-logs"
+    monitoring_dashboard: "boilerplate-nestjs-dev-dashboard"
+    enable_cloud_trace: true
+    enable_error_reporting: true
+
+# Configurações de segurança
+security:
+  enable_waf: false # Para economia de custos no ambiente dev
+  enable_ddos_protection: false # Para economia de custos no ambiente dev
+  # Políticas de segurança específicas por provedor
+  aws:
+    security_group_rules:
+      - type: "ingress"
+        protocol: "tcp"
+        port: 443
+        cidr_blocks: ["0.0.0.0/0"]
+      - type: "ingress" 
+        protocol: "tcp"
+        port: 80
+        cidr_blocks: ["0.0.0.0/0"]
+  gcp:
+    cloud_armor_enabled: false # Para economia de custos no ambiente dev
+    ssl_policy: "modern"
+  digitalocean:
+    firewall_rules:
+      - type: "inbound"
+        protocol: "tcp"
+        ports: "80,443"
+        sources:
+          addresses: ["0.0.0.0/0", "::/0"]
+
+# Configurações para webhooks e secrets
+secrets:
+  secret_manager: "aws" # Provedor para gerenciamento de secrets: aws, gcp, vault
+  webhook_secrets_path: "/webhooks/"
+  api_keys_path: "/api-keys/"
+  # Webhooks para alertas e integrações
+  webhooks:
+    slack: "${env:SLACK_WEBHOOK_URL}"
+    teams: "${env:MS_TEAMS_WEBHOOK_URL}"
+    pagerduty: "${env:PAGERDUTY_WEBHOOK_URL}"
+    opsgenie: "${env:OPSGENIE_WEBHOOK_URL}"
+  # Chaves de API para serviços externos
+  api_keys:
+    external: "${env:EXTERNAL_API_KEY}"
+    monitoring: "${env:MONITORING_API_KEY}"

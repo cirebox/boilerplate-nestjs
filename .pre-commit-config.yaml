@@ -1,0 +1,124 @@
+# Configuração de hooks de pré-commit para validação de código Terraform
+default_stages: [commit, push]
+default_language_version:
+  python: python3
+
+# Meta hooks para validação da própria configuração
+repos:
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+
+  # Hooks gerais para arquivos
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: check-terraform-lockfile
+
+  # Formatação e validação do Terraform
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.83.5
+    hooks:
+      - id: terraform_fmt
+        description: 'Formata automaticamente o código Terraform'
+      - id: terraform_validate
+        description: 'Valida a sintaxe e configuração do Terraform'
+      - id: terraform_docs
+        description: 'Atualiza documentação automática do Terraform'
+        args:
+          - --args=--config=.terraform-docs.yml
+      - id: terraform_tflint
+        description: 'Executa linter customizado para Terraform'
+        args:
+          - --args=--config=.tflint.hcl
+      - id: terrascan
+        description: 'Verifica conformidade de segurança e melhores práticas'
+        args:
+          - --args=-i terraform
+      - id: terraform_tfsec
+        description: 'Executa análise de segurança estática no código Terraform'
+      - id: terraform_checkov
+        description: 'Analisa código para conformidade com políticas e melhores práticas'
+        args:
+          - --args=--quiet
+          - --args=--skip-check CKV_AWS_*
+          - --args=--skip-check CKV_AZURE_*
+          - --args=--skip-check CKV_GCP_*
+
+  # Validação de scripts shell
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: ['-e', 'SC1090,SC1091']
+
+  # Verificação de secrets
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.17.0
+    hooks:
+      - id: gitleaks
+        description: 'Detecta senhas, chaves privadas e outros dados sensíveis'
+
+  # Verificação ortográfica para arquivos de documentação
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.16.9
+    hooks:
+      - id: typos
+        description: 'Verifica erros ortográficos em textos e documentação'
+
+  # Validação de commit convencional
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # Validação de arquivos Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint
+        args: ["--config", ".markdownlint.yaml"]
+
+  # Análise de custos com Infracost
+  - repo: https://github.com/infracost/infracost
+    rev: v0.10.32
+    hooks:
+      - id: infracost_breakdown
+        args: ["--path=.", "--terraform-var-file=environments/dev.tfvars"]
+
+  # Verificação da documentação dos módulos
+  - repo: local
+    hooks:
+      - id: terraform-readme-check
+        name: Verifica README nos módulos
+        entry: bash -c 'find modules -type d -maxdepth 1 -mindepth 1 -exec test -f {}/README.md \; -o -print | grep -q .'
+        language: system
+        pass_filenames: false
+
+# Configurações locais para ignorar certos diretórios
+exclude: |
+  (?x)^(
+    \.terraform/.*|
+    .*\.tfstate|
+    .*\.tfstate\.backup|
+    modules/.*/\.terraform/.*|
+    .*\.terragrunt-cache/.*|
+    .*/\.tfplan
+  )$
+
+# Configurações de CI
+ci:
+  autofix_commit_msg: 'ci: correções automáticas de pre-commit'
+  autofix_prs: true
+  autoupdate_commit_msg: 'ci: atualiza hooks de pre-commit'
+  skip: []
+  submodules: false

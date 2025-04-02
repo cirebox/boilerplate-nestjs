@@ -1,0 +1,75 @@
+# Configuração do ambiente de homologação (staging)
+provider:
+  # Provider ativo: "aws", "gcp" ou "digitalocean"
+  active: "aws"
+  
+  # Configurações da AWS
+  aws:
+    region: "us-east-1"
+    profile: "default"
+    # As credenciais da AWS são fornecidas via variáveis de ambiente:
+    # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+  
+  # Configurações do GCP
+  gcp:
+    project: "boilerplate-nestjs-staging"
+    region: "us-central1"
+    zone: "us-central1-a"
+    # Arquivo de credenciais armazenado em diretório seguro fora do controle de versão
+    credentials_file: "~/.gcp/boilerplate-nestjs-staging-credentials.json"
+  
+  # Configurações do DigitalOcean
+  digitalocean:
+    # Token armazenado em arquivo seguro ou variável de ambiente DIGITALOCEAN_TOKEN
+    token_file: "~/.digitalocean/token"
+    region: "nyc1"
+
+# Configuração de rede
+network:
+  vpc_cidr: "10.0.0.0/16"
+  subnet_count: 3
+  create_nat_gateway: true # Necessário para clusters Kubernetes privados
+
+# Configuração do banco de dados
+database:
+  engine: "postgres"
+  engine_version: "14"
+  instance_type: "db.t3.small" # AWS / RDS - maior que dev
+  storage_gb: 30
+  max_allocated_storage: 100
+  backup_retention_days: 7
+  skip_final_snapshot: false 
+  deletion_protection: true # Proteção contra exclusão acidental
+
+# Configuração do Kubernetes
+kubernetes:
+  version: "1.26"
+  node_instance_types: ["t3.medium"] # AWS / EKS - maior que dev
+  min_nodes: 2
+  max_nodes: 5
+  desired_nodes: 2
+  auto_scaling: true
+
+# Configuração de monitoramento de custos
+cost:
+  budget_amount: 300
+  budget_currency: "USD"
+  alert_threshold_percent: 80
+  alert_emails: ["admin@example.com", "devops@example.com"]
+  enable_cost_explorer: true
+  cost_allocation_tags: ["Project", "Environment"]
+  
+# Configuração de métricas e logs
+monitoring:
+  enable_metrics: true
+  retention_days: 14
+  alert_threshold_cpu: 70
+  alert_threshold_memory: 70
+  namespace: "staging"
+  # Configurações específicas para AWS
+  aws:
+    webhook_url: "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ"
+    service_name: "boilerplate-nestjs-staging-service"
+    cluster_name: "boilerplate-nestjs-staging-cluster"
+    kubernetes_service: true
+  # Outras configurações específicas para outros provedores...

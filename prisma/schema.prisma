@@ -35,8 +35,15 @@ generator client {
 //   includeFieldExamples = true
 // }
 
+// Configuração para SQLite (comentado para testes com PostgreSQL)
+// datasource db {
+//   provider = "sqlite"
+//   url      = env("DATABASE_URL")
+// }
+
+// Configuração para PostgreSQL (para testes com a infraestrutura do Terraform)
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

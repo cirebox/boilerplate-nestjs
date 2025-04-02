@@ -1,0 +1,79 @@
+# Configuração do ambiente de produção
+provider:
+  # Provider ativo: "aws", "gcp" ou "digitalocean"
+  active: "gcp"
+  
+  # Configurações da AWS
+  aws:
+    region: "us-east-1"
+    profile: "production"
+    # As credenciais da AWS são fornecidas via variáveis de ambiente:
+    # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+  
+  # Configurações do GCP
+  gcp:
+    project: "boilerplate-nestjs-prod"
+    region: "us-central1"
+    zone: "us-central1-a"
+    # Arquivo de credenciais armazenado em diretório seguro fora do controle de versão
+    credentials_file: "~/.gcp/boilerplate-nestjs-prod-credentials.json"
+    billing_account_id: "XXXXXX-XXXXXX-XXXXXX" # Obrigatório para orçamentos no GCP
+  
+  # Configurações do DigitalOcean
+  digitalocean:
+    # Token armazenado em arquivo seguro ou variável de ambiente DIGITALOCEAN_TOKEN
+    token_file: "~/.digitalocean/token"
+    region: "nyc1"
+
+# Configuração de rede
+network:
+  vpc_cidr: "10.0.0.0/16"
+  subnet_count: 3
+  create_nat_gateway: true # Necessário para clusters Kubernetes privados
+
+# Configuração do banco de dados
+database:
+  engine: "postgres"
+  engine_version: "14"
+  instance_type: "db-custom-4-15360" # GCP Cloud SQL - instância personalizada com 4 vCPUs e 15GB RAM
+  storage_gb: 100
+  max_allocated_storage: 500
+  backup_retention_days: 30
+  skip_final_snapshot: false
+  deletion_protection: true # Alta proteção para ambiente de produção
+
+# Configuração do Kubernetes
+kubernetes:
+  version: "1.26"
+  node_instance_types: ["e2-standard-4"] # GCP GKE - 4 vCPUs, 16GB RAM
+  min_nodes: 3
+  max_nodes: 10
+  desired_nodes: 3
+  auto_scaling: true
+
+# Configuração de monitoramento de custos
+cost:
+  budget_amount: 1000
+  budget_currency: "USD"
+  alert_threshold_percent: 80
+  alert_emails: ["admin@example.com", "devops@example.com", "cto@example.com"]
+  enable_cost_explorer: true
+  cost_allocation_tags: ["Project", "Environment", "Service", "Team"]
+  
+# Configuração de métricas e logs
+monitoring:
+  enable_metrics: true
+  retention_days: 30
+  alert_threshold_cpu: 70
+  alert_threshold_memory: 70
+  namespace: "production"
+  # Configurações específicas para GCP
+  gcp:
+    service_name: "boilerplate-nestjs-prod-service"
+    cluster_name: "boilerplate-nestjs-prod-cluster"
+    notification_channels: ["email", "slack"]
+    slack_webhook_url: "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ"
+    slack_channel: "prod-alerts"
+    pagerduty_integration: true
+    pagerduty_service_key: "${PAGERDUTY_SERVICE_KEY}" # Via variável de ambiente
+    uptime_check_paths: ["/health", "/api/status"]

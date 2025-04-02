@@ -1,0 +1,36 @@
+# Arquivos de estado locais
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
+# Diretório .terraform local
+**/.terraform/*
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+crash.*.log
+
+# Arquivos sensíveis
+**/*.secret
+**/*.key
+**/.env
+**/secrets.tfvars
+**/secret.auto.tfvars
+
+# Variáveis
+*.auto.tfvars
+*.auto.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Exceção: manter arquivos de exemplo
+!example.tfvars
+!example.auto.tfvars
+
+# Arquivos de planos e saídas
+tfplan
+*.plan
+.terraform.lock.hcl
