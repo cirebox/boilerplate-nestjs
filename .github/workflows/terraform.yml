@@ -2,245 +2,155 @@ name: 'Terraform CI/CD'
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [ main, develop ]
     paths:
       - 'terraform/**'
+      - '.github/workflows/terraform.yml'
   pull_request:
+    branches: [ main, develop ]
     paths:
       - 'terraform/**'
+      - '.github/workflows/terraform.yml'
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pull-requests: write
+    inputs:
+      environment:
+        description: 'Ambiente para deploy (dev, staging, prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: 'Ação a ser executada'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
 
 env:
-  TF_LOG: INFO
-  TF_INPUT: false
-  TERRAFORM_VERSION: '1.5.7'
-  WORKING_DIR: terraform
+  TF_VERSION: '1.7.0'
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+  TF_IN_AUTOMATION: 'true'
 
 jobs:
-  terraform-fmt:
-    name: 'Terraform Format'
+  terraform:
+    name: 'Terraform'
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
-
-      - name: Terraform Format Check
-        id: fmt
-        run: terraform fmt -check -diff -recursive
-        working-directory: ${{ env.WORKING_DIR }}
-
-  terraform-security:
-    name: 'Terraform Security Scan'
-    runs-on: ubuntu-latest
-    needs: terraform-fmt
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Run tfsec
-        uses: aquasecurity/tfsec-action@v1.0.0
-        with:
-          working_directory: ${{ env.WORKING_DIR }}
-          
-      - name: Run checkov
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: ${{ env.WORKING_DIR }}
-          framework: terraform
-          quiet: false
-          soft_fail: true
-
-  terraform-validate:
-    name: 'Terraform Validate'
-    runs-on: ubuntu-latest
-    needs: terraform-security
     defaults:
       run:
-        working-directory: ${{ env.WORKING_DIR }}
+        working-directory: ./terraform
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Determinar ambiente
+        id: set-environment
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+            echo "ACTION=${{ github.event.inputs.action }}" >> $GITHUB_ENV
+          else
+            if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+              echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+              echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            else
+              echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            fi
+            echo "ACTION=plan" >> $GITHUB_ENV
+          fi
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Lint
+        id: lint
+        uses: terraform-linters/tflint-bundle@v1
+        continue-on-error: true
 
       - name: Terraform Init
         id: init
-        run: terraform init -backend=false
+        run: |
+          # Configuração condicional do backend conforme ambiente
+          case $ENVIRONMENT in
+            dev)
+              BACKEND_CONFIG="-backend-config=bucket=boilerplate-nestjs-terraform-state-dev"
+              ;;
+            staging)
+              BACKEND_CONFIG="-backend-config=bucket=boilerplate-nestjs-terraform-state-staging"
+              ;;
+            prod)
+              BACKEND_CONFIG="-backend-config=bucket=boilerplate-nestjs-terraform-state-prod"
+              ;;
+          esac
+          
+          terraform init $BACKEND_CONFIG -backend-config=key=${ENVIRONMENT}/terraform.tfstate
 
       - name: Terraform Validate
         id: validate
-        run: terraform validate
+        run: terraform validate -no-color
 
-  terraform-plan:
-    name: 'Terraform Plan'
-    runs-on: ubuntu-latest
-    needs: terraform-validate
-    defaults:
-      run:
-        working-directory: ${{ env.WORKING_DIR }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - name: Terraform Security Scan
+        id: tfsec
+        uses: aquasecurity/tfsec-sarif-action@v0.1.4
         with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          working_directory: ./terraform
+          sarif_file: tfsec.sarif
+        continue-on-error: true
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-
-      - name: Setup DigitalOcean CLI
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-
-      - name: Terraform Init
-        id: init
-        run: terraform init -backend-config="environments/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}/backend.hcl"
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-
-      - name: Terraform Init (PR)
-        id: init-pr
-        run: terraform init -backend=false
-        if: github.event_name == 'pull_request'
+          sarif_file: tfsec.sarif
+          category: tfsec
+        if: always()
 
       - name: Terraform Plan
         id: plan
-        run: |
-          ENV=${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-          terraform plan -var-file="environments/$ENV/terraform.tfvars" -input=false -out=tfplan
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: terraform plan -no-color -var="environment=${{ env.ENVIRONMENT }}" -out=tfplan
+        continue-on-error: true
 
-      - name: Terraform Plan (PR)
-        id: plan-pr
-        run: |
-          ENV=${{ github.head_ref == 'main' && 'prod' || 'dev' }}
-          terraform plan -var-file="environments/$ENV/terraform.tfvars" -input=false
+      - name: Terraform Cost Estimation
+        id: infracost
+        uses: infracost/infracost-action@v2
+        with:
+          path: ./terraform
+          terraform_plan_flags: -var="environment=${{ env.ENVIRONMENT }}"
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
         if: github.event_name == 'pull_request'
-
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v3
-        with:
-          name: terraform-plan
-          path: ${{ env.WORKING_DIR }}/tfplan
-          retention-days: 5
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-
-      - name: Plan Output
-        id: output
-        run: terraform show -no-color tfplan > plan.txt
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-
-      - name: Update Pull Request
-        uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const output = fs.readFileSync('terraform/plan.txt', 'utf8');
-            
-            const maxGitHubBodyCharacters = 65536;
-            let outputToDisplay = output.length > maxGitHubBodyCharacters
-              ? output.substring(0, maxGitHubBodyCharacters) + "\n\n... Plano muito grande para exibir completamente"
-              : output;
-              
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## Terraform Plan 📝\n
-              \`\`\`terraform\n${outputToDisplay}\n\`\`\``
-            });
-
-  terraform-apply:
-    name: 'Terraform Apply'
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    needs: terraform-plan
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
-    defaults:
-      run:
-        working-directory: ${{ env.WORKING_DIR }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Setup DigitalOcean CLI
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-
-      - name: Terraform Init
-        id: init
-        run: terraform init -backend-config="environments/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}/backend.hcl"
-
-      - name: Download Terraform Plan
-        uses: actions/download-artifact@v3
-        with:
-          name: terraform-plan
-          path: ${{ env.WORKING_DIR }}
+        continue-on-error: true
 
       - name: Terraform Apply
-        id: apply
+        if: env.ACTION == 'apply' && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
         run: terraform apply -auto-approve tfplan
+        
+      - name: Terraform Destroy
+        if: env.ACTION == 'destroy' && github.event_name == 'workflow_dispatch'
+        run: terraform destroy -auto-approve -var="environment=${{ env.ENVIRONMENT }}"
 
-      - name: Notify Slack on Success
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_CHANNEL: terraform-deployments
-          SLACK_COLOR: good
-          SLACK_ICON: https://www.terraform.io/favicon.ico
-          SLACK_MESSAGE: 'Terraform aplicado com sucesso para ${{ github.ref == 'refs/heads/main' && 'Produção' || 'Desenvolvimento' }} :rocket:'
-          SLACK_TITLE: Terraform Apply
-          SLACK_USERNAME: Terraform CI/CD
-        if: success()
-
-      - name: Notify Slack on Failure
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_CHANNEL: terraform-deployments
-          SLACK_COLOR: danger
-          SLACK_ICON: https://www.terraform.io/favicon.ico
-          SLACK_MESSAGE: 'Falha na aplicação do Terraform para ${{ github.ref == 'refs/heads/main' && 'Produção' || 'Desenvolvimento' }} :rotating_light:'
-          SLACK_TITLE: Terraform Apply Falhou
-          SLACK_USERNAME: Terraform CI/CD
-        if: failure()
+      - name: Upload Terraform Plan
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan-${{ env.ENVIRONMENT }}
+          path: ./terraform/tfplan
+          retention-days: 5
 

@@ -1,35 +1,223 @@
 name: CD Pipeline
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ['CI Pipeline']
+    types:
+      - completed
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente de deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+  TF_VERSION: '1.7.0'
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/nestjs-boilerplate
 
 jobs:
-  build:
+  define-environment:
     runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      provider: ${{ steps.set-provider.outputs.provider }}
+    
+    steps:
+      - name: Set environment based on branch or input
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.workflow_run.head_branch }}" == "main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.workflow_run.head_branch }}" == "develop" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Determine cloud provider from config
+        id: set-provider
+        run: |
+          ENV=${{ steps.set-env.outputs.environment }}
+          PROVIDER=$(grep -A 5 "provider:" terraform/environments/$ENV/config.yaml | grep "active:" | cut -d'"' -f2 | tr -d "'" | tr -d " ")
+          echo "provider=$PROVIDER" >> $GITHUB_OUTPUT
 
+  terraform-provision:
+    needs: define-environment
+    runs-on: ubuntu-latest
+    environment: ${{ needs.define-environment.outputs.environment }}
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init \
+            -backend-config="bucket=boilerplate-nestjs-terraform-state-${{ needs.define-environment.outputs.environment }}" \
+            -backend-config="key=${{ needs.define-environment.outputs.environment }}/terraform.tfstate"
 
-      - name: Build Docker image
-        run: docker build -t boilerplate-nestjs:${{ github.sha }} .
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform apply -auto-approve -var="environment=${{ needs.define-environment.outputs.environment }}"
 
-      # - name: Push Docker image to DockerHub
-      #   run: docker push boilerplate-nestjs:${{ github.sha }}
+      - name: Extract Kubernetes Endpoint
+        id: k8s-endpoint
+        run: |
+          cd terraform
+          ENDPOINT=$(terraform output -raw kubernetes_endpoint || echo "")
+          echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
+    
+    outputs:
+      k8s_endpoint: ${{ steps.k8s-endpoint.outputs.endpoint }}
 
-  deploy:
+  deploy-to-kubernetes:
+    needs: [define-environment, terraform-provision]
     runs-on: ubuntu-latest
-    needs: build
-
+    environment: ${{ needs.define-environment.outputs.environment }}
+    if: needs.terraform-provision.outputs.k8s_endpoint != ''
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
+      
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+      
+      - name: Configure Kubernetes credentials
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ env.KUBE_CONFIG_DATA }}
+          context: default
+      
+      - name: Set image tag
+        run: |
+          TAG=${{ github.sha }}
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+      
+      - name: Download Docker image from CI
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+        if: ${{ needs.define-environment.outputs.environment == 'prod' && github.event_name == 'workflow_run' }}
+      
+      - name: Load Docker image
+        run: |
+          docker load < nestjs-image.tar
+          docker tag nestjs-boilerplate:latest ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }}
+        if: ${{ needs.define-environment.outputs.environment == 'prod' && github.event_name == 'workflow_run' }}
+      
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f kubernetes/deployment-hmg.yaml
+          ENV=${{ needs.define-environment.outputs.environment }}
+          # Substituir a tag da imagem nos arquivos de manifesto
+          sed -i "s|image:.*|image: ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }}|g" k8s/$ENV/deployment.yaml
+          
+          # Aplicar os manifestos
+          kubectl apply -f k8s/$ENV/
+          kubectl rollout status deployment/boilerplate-nestjs -n default --timeout=180s
+      
+      - name: Verify deployment
+        run: |
+          kubectl get pods -l app=boilerplate-nestjs
+          echo "Deployment concluído com sucesso para ${{ needs.define-environment.outputs.environment }}"
+
+  update-dns:
+    needs: [define-environment, terraform-provision, deploy-to-kubernetes]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.define-environment.outputs.environment }}
+    if: needs.define-environment.outputs.environment == 'prod' && needs.terraform-provision.outputs.k8s_endpoint != ''
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure DNS (Digital Ocean)
+        if: needs.define-environment.outputs.provider == 'digitalocean'
+        run: |
+          # Instalar doctl para gerenciar DNS
+          curl -sL https://github.com/digitalocean/doctl/releases/download/v1.101.0/doctl-1.101.0-linux-amd64.tar.gz | tar -xzv
+          sudo mv doctl /usr/local/bin
+          doctl auth init -t ${{ env.DIGITALOCEAN_TOKEN }}
+          
+          # Obter IP para atualizar registro DNS
+          DOMAIN="boilerplate-nestjs.example.com"
+          LOAD_BALANCER_IP=$(doctl compute load-balancer list --format IP --no-header)
+          
+          # Atualizar ou criar registro DNS
+          RECORD_ID=$(doctl compute domain records list example.com --format ID,Name,Data --no-header | grep boilerplate-nestjs | awk '{print $1}')
+          if [ -n "$RECORD_ID" ]; then
+            doctl compute domain records update example.com --record-id $RECORD_ID --record-data $LOAD_BALANCER_IP
+          else
+            doctl compute domain records create example.com --record-type A --record-name boilerplate-nestjs --record-data $LOAD_BALANCER_IP --record-ttl 300
+          fi
+        continue-on-error: true
+      
+      - name: Configure DNS (AWS)
+        if: needs.define-environment.outputs.provider == 'aws'
+        run: |
+          # Instalar AWS CLI
+          pip install --upgrade aws-cli
+          
+          # Obter endpoint para atualizar registro DNS
+          DOMAIN="boilerplate-nestjs.example.com"
+          LOAD_BALANCER_DNS=$(aws elb describe-load-balancers --query "LoadBalancerDescriptions[?contains(DNSName, 'boilerplate-nestjs')].DNSName" --output text)
+          
+          # Criar arquivo de lote para Route53
+          cat > dns-update.json << EOF
+          {
+            "Changes": [
+              {
+                "Action": "UPSERT",
+                "ResourceRecordSet": {
+                  "Name": "${DOMAIN}",
+                  "Type": "CNAME",
+                  "TTL": 300,
+                  "ResourceRecords": [
+                    {
+                      "Value": "${LOAD_BALANCER_DNS}"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+          EOF
+          
+          # Obter ID da Zona hospedada
+          HOSTED_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name=='example.com.'].Id" --output text | sed 's|/hostedzone/||')
+          
+          # Atualizar registro DNS
+          aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE_ID --change-batch file://dns-update.json
+        continue-on-error: true
+      
+      - name: Post-deployment notification
+        run: |
+          echo "Aplicação implantada com sucesso em ${{ needs.define-environment.outputs.environment }}"
+          # Aqui poderia ser adicionada uma notificação para Slack, Teams, etc.
