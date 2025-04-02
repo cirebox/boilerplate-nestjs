@@ -105,7 +105,6 @@ provider "kubernetes" {
   token                  = local.k8s_token
   
   # Configurações de timeout para operações k8s
-  request_timeout        = "60s"
 }
 
 # Variáveis locais para configuração de providers
