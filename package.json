@@ -123,5 +123,17 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ],
+    "*.prisma": [
+      "npx prisma format"
+    ]
   }
 }

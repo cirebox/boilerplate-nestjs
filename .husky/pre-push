@@ -1,0 +1,23 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Verificação de cobertura de testes
+echo "🔍 Verificando cobertura de testes..."
+npm run test:cov
+
+# Verificação de segurança para dependências (apenas alerta)
+echo "🔍 Verificando vulnerabilidades nas dependências..."
+npm audit --audit-level=high || (
+  echo ""
+  echo "⚠️ AVISO DE SEGURANÇA ⚠️"
+  echo "Foram encontradas vulnerabilidades de alto risco nas dependências."
+  echo "Recomenda-se executar 'npm audit fix' ou revisar as vulnerabilidades."
+  echo "Esta verificação é apenas informativa e não bloqueará seu push."
+  echo ""
+  # Retorna 0 para permitir que o push continue
+  exit 0
+)
+
+# Verificação mais rigorosa de tipos
+echo "🔍 Verificando tipos TypeScript..."
+npx tsc --noEmit --skipLibCheck

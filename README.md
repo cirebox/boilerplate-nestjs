@@ -3,8 +3,11 @@
 [![image](https://github.com/brocoders/nestjs-boilerplate/assets/72293912/197da43e-02f4-4895-8d3e-b7a42a591c26)](https://github.com/new?template_name=boilerplate-nestjs&template_owner=cirebox)
 
 ## Description
+
 NestJS boilerplate for a typical project
+
 ## Features
+
 - [x] Prisma Database ORM.
 - [x] Seeding
 - [x] GRPC.
@@ -16,7 +19,7 @@ NestJS boilerplate for a typical project
 - [x] TypeDocs
 - [x] Swagger
 - [x] Units tests.
-- [ ] E2E tests 
+- [ ] E2E tests
 - [ ] Docker.
 - [x] Husky.
 - [x] CI (Github Actions).
@@ -38,8 +41,8 @@ docker-compose logs
 
 ## [Architecture](/doc/architecture.md)
 
-
 ## Installation
+
 ```bash
 $ pnpm install
 ```
@@ -75,6 +78,10 @@ $ pnpm run test:e2e
 $ pnpm run test:cov
 ```
 
+## [Infraestrutura como Código - Terraform](/terraform/README.md)
+
+## [Husky](/doc/husky.md)
+
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
@@ -104,9 +111,9 @@ $ pnpm run test:cov
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Support
+
 If you seek consulting, support, or wish to collaborate, please contact us via [suportecire@gmail.com](mailto:suportecire@gmail.com). For any inquiries regarding boilerplates, feel free to ask on [GitHub Discussions](https://github.com/cirebox/boilerplate-nestjs/discussions).
 
 Author - [Eric Pereira](https://portfolio-eric-pereira.vercel.app/)
 
- 
 <p><a href="https://www.buymeacoffee.com/ericpereiri"> <img align="left" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="50" width="210" alt="wetty1" /></a></p><br><br>

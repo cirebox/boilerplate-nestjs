@@ -1,15 +1,17 @@
 # Infraestrutura como Código - Terraform
 
-Este diretório contém a configuração de infraestrutura como código (IaC) para o projeto boilerplate-nestjs, permitindo o provisionamento da infraestrutura de forma automatizada e repetível.
+Este diretório contém a configuração de infraestrutura como código (IaC) para o projeto boilerplate-nestjs, permitindo o provisionamento da infraestrutura de forma automatizada e repetível em múltiplos provedores de nuvem.
 
-## Arquitetura
+## Visão Geral
 
-A arquitetura de infraestrutura deste projeto é multi-cloud e suporta os seguintes provedores:
+A infraestrutura deste projeto foi projetada para ser multi-cloud, suportando ambientes em:
+
 - **AWS** (Amazon Web Services)
-- **GCP** (Google Cloud Platform) 
+- **GCP** (Google Cloud Platform)
 - **DigitalOcean** (Provedor padrão atual)
+- **Local** (Ambiente de desenvolvimento usando Docker)
 
-### Visão Geral da Arquitetura
+### Diagrama da Arquitetura
 
 ```
                        ┌─────────────────┐
@@ -29,150 +31,363 @@ A arquitetura de infraestrutura deste projeto é multi-cloud e suporta os seguin
                        └─────────────────┘
 ```
 
-### Escolhas de Design
+## Design Técnico
 
-1. **Abordagem Multi-cloud**: 
-   - A infraestrutura foi projetada para funcionar em múltiplos provedores de nuvem para evitar dependência de um único fornecedor
-   - Cada provedor tem implementações específicas dos mesmos recursos, permitindo migração com interrupção mínima
+### Principais Princípios
+
+1. **Abordagem Multi-cloud**:
+
+    - Abstração de provedores específicos através de módulos
+    - Configurações específicas isoladas por provedor
+    - Fácil migração entre provedores
 
 2. **Modularização**:
-   - Separação clara entre recursos compartilhados (rede, banco de dados, monitoramento)
-   - Módulos independentes para facilitar a manutenção e evolução da infraestrutura
 
-3. **Foco em Segurança e Custo**:
-   - Implementação de alertas de custos e limites orçamentários
-   - Isolamento de rede com acessos restritos
-   - Backup automático de dados críticos
+    - Módulos reutilizáveis para cada componente de infraestrutura
+    - Separação clara entre recursos de rede, banco de dados, Kubernetes, etc.
+    - Interfaces consistentes entre módulos
 
-## Estrutura de Diretórios
+3. **Segurança e Controle de Custos**:
+    - Implementação de alertas de custos e limites orçamentários
+    - Rotação automática de credenciais
+    - Monitoramento proativo
+    - Otimização baseada em ambientes (dev/staging/prod)
+
+## Estrutura de Arquivos
 
 ```
 terraform/
-├── aws/                  # Configurações específicas da AWS
-├── digital-ocean/        # Configurações específicas do DigitalOcean
-├── environments/         # Configurações específicas de ambiente
-│   ├── dev/              # Ambiente de desenvolvimento
-│   ├── prod/             # Ambiente de produção
-│   └── staging/          # Ambiente de staging
-├── gcp/                  # Configurações específicas do Google Cloud
-├── modules/              # Módulos reutilizáveis de Terraform
-│   ├── cost_monitor/     # Monitoramento e alertas de custos
-│   ├── database/         # Bancos de dados gerenciados
-│   ├── kubernetes/       # Clusters Kubernetes
-│   ├── monitoring/       # Monitoramento e alertas
-│   └── network/          # Configurações de rede
-├── main.tf               # Configuração principal
-├── variables.tf          # Definição de variáveis
-└── README.md             # Esta documentação
+├── .pre-commit-config.yaml       # Configurações de hooks pre-commit
+├── .gitignore                    # Arquivos ignorados pelo git
+├── main.tf                       # Configuração principal Terraform
+├── variables.tf                  # Variáveis globais
+├── outputs.tf                    # Outputs gerais
+├── providers.tf                  # Configuração de provedores
+├── provider_overrides.tf         # Correções para problemas de namespace
+├── environments/                 # Configurações por ambiente
+│   ├── dev/                      # Ambiente de desenvolvimento
+│   │   ├── config.yaml           # Configuração específica
+│   │   ├── main.tf               # Recursos do ambiente dev
+│   │   ├── aws/                  # Configs AWS para dev
+│   │   ├── gcp/                  # Configs GCP para dev
+│   │   └── digital-ocean/        # Configs DO para dev
+│   ├── staging/                  # Ambiente de homologação
+│   └── prod/                     # Ambiente de produção
+│       ├── config.yaml           # Configuração para produção
+│       └── main.tf               # Recursos do ambiente prod
+├── modules/                      # Módulos reutilizáveis
+│   ├── network/                  # Recursos de rede
+│   │   ├── aws/                  # Implementação para AWS
+│   │   ├── gcp/                  # Implementação para GCP
+│   │   └── digital-ocean/        # Implementação para DO
+│   ├── database/                 # Recursos de banco de dados
+│   ├── kubernetes/               # Clusters Kubernetes
+│   ├── monitoring/               # Sistemas de monitoramento
+│   ├── cost_monitor/             # Monitoramento de custos
+│   ├── load_balancing/           # Balanceadores de carga
+│   ├── security/                 # Recursos de segurança
+│   └── local/                    # Ambiente de desenvolvimento local
+└── README.md                     # Esta documentação
 ```
 
-## Módulos
+## Anatomia dos Módulos
+
+Cada módulo segue uma estrutura consistente:
+
+```
+modules/<tipo_recurso>/<provedor>/
+├── main.tf           # Definição principal dos recursos
+├── variables.tf      # Variáveis de entrada
+├── outputs.tf        # Valores de saída
+└── README.md         # (Opcional) Documentação específica
+```
+
+## Módulos Principais
 
 ### Módulo Network
 
-**Propósito**: Configurar redes privadas, subnets e gateways necessários para garantir o isolamento de recursos e a segurança.
+Responsável por configurar toda a infraestrutura de rede, incluindo:
 
-**Implementações**:
-- `network/aws`: VPC, subnets públicas/privadas, NAT Gateway, Internet Gateway
-- `network/gcp`: VPC, subnet, Cloud Router, Cloud NAT
-- `network/digital-ocean`: VPC, Firewall
+- VPCs/VNets
+- Subnets (públicas e privadas)
+- NAT Gateways
+- Firewall/Security Groups
+- DNS (quando aplicável)
 
 ### Módulo Database
 
-**Propósito**: Provisionar bancos de dados gerenciados otimizados para alta disponibilidade, backup automático e escalabilidade.
+Configura bancos de dados gerenciados otimizados para:
 
-**Implementações**:
-- `database/aws`: Amazon RDS PostgreSQL com configuração de backup e alta disponibilidade
-- `database/gcp`: Cloud SQL PostgreSQL com alta disponibilidade e recuperação point-in-time
-- `database/digital-ocean`: DigitalOcean Managed PostgreSQL Database
+- Alta disponibilidade (em produção)
+- Backup automático
+- Segurança
+- Controle de custos em ambientes não-produtivos
 
 ### Módulo Kubernetes
 
-**Propósito**: Criar e configurar clusters Kubernetes para hospedagem de aplicações em contêineres com auto-scaling.
+Provisiona clusters Kubernetes para hospedagem de aplicações:
 
-**Recursos**:
-- Proteção contra exclusão acidental em ambiente de produção (`prevent_destroy = true`)
-- Auto-scaling de nós baseado em métricas de CPU e memória
-- Controle de custo com uso de instâncias spot em ambientes não produtivos
-
-**Implementações**:
-- `kubernetes/aws`: Amazon EKS com node groups otimizados
-- `kubernetes/gcp`: Google Kubernetes Engine (GKE) com auto-scaling
-- `kubernetes/digital-ocean`: DigitalOcean Kubernetes (DOKS)
+- Auto-scaling de nós
+- Configurações adequadas ao ambiente (prod/staging/dev)
+- Integrações com sistemas de monitoramento
+- Otimização de custos (uso de instâncias spot em dev/staging)
 
 ### Módulo Cost Monitor
 
-**Propósito**: Monitorar, alertar e otimizar custos de infraestrutura em todos os ambientes.
+Implementa:
 
-**Implementações**:
-- `cost_monitor/aws`: AWS Budgets e Cost Explorer com alertas de limite orçamentário
-- `cost_monitor/gcp`: Google Cloud Billing Budgets e recomendações de otimização
-- `cost_monitor/digital-ocean`: Alertas de cobrança via API
+- Alertas de orçamento
+- Detecção de recursos subutilizados
+- Recomendações de otimização
+- Relatórios de custo
 
 ### Módulo Monitoring
 
-**Propósito**: Configurar monitoramento e alertas para métricas de aplicação e infraestrutura.
+Configura monitoramento para:
 
-**Implementações**:
-- `monitoring/aws`: CloudWatch Alarms e Dashboards com integração ao Slack
-- `monitoring/gcp`: Cloud Monitoring (Stackdriver) com alertas configuráveis
-- `monitoring/digital-ocean`: Monitoramento via Prometheus/Grafana
+- Métricas de recursos (CPU, memória, etc.)
+- Logs da aplicação
+- Alertas para condições anômalas
+- Dashboards com visão geral da infra
 
-## Como usar
+### Módulo Local
 
-### Pré-requisitos
-- Terraform v1.0.0+
-- Credenciais configuradas para o(s) provedor(es) de nuvem desejado(s)
-- Variáveis de ambiente configuradas (veja abaixo)
+Permite desenvolvimento local usando:
 
-### Variáveis de Ambiente Necessárias
+- Docker para containers
+- Volumes persistentes para dados
+- Network isolada
+- Configuração simplificada
 
-Antes de executar o Terraform, configure as seguintes variáveis de ambiente conforme o provedor escolhido:
+## Sistema de Configuração
 
-**Para Digital Ocean (provedor padrão):**
-```bash
-# Token de API da Digital Ocean (obrigatório)
-export DIGITALOCEAN_TOKEN="seu_token_aqui"
+### Arquivos de Configuração
 
-# URL do Webhook do Slack para notificações de alertas (opcional)
-export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/XXX/YYY/ZZZ"
+Os ambientes são configurados através de arquivos YAML em `environments/<ambiente>/config.yaml`. Exemplo:
 
-# Email para receber alertas (obrigatório)
-export ALERT_EMAIL="seu_email@exemplo.com"
+```yaml
+provider:
+    active: 'digitalocean' # Provedor ativo
 
-# Endpoint para healthcheck da aplicação (obrigatório em produção)
-export SERVICE_HEALTH_ENDPOINT="https://api.seu-dominio.com/health"
+    digitalocean:
+        token_file: '~/.digitalocean/token'
+        region: 'nyc1'
+
+    aws:
+        profile: 'default'
+        region: 'us-east-1'
+
+    gcp:
+        project: 'meu-projeto'
+        region: 'us-central1'
+
+    local:
+        docker_host: 'unix:///var/run/docker.sock'
+
+network:
+    vpc_cidr: '10.0.0.0/16'
+
+database:
+    engine: 'postgres'
+    version: '14'
+
+kubernetes:
+    version: '1.26'
+    node_instance_types: ['s-2vcpu-2gb']
 ```
 
-**Para AWS:**
+### Variáveis de Ambiente
+
+O projeto permite configuração via variáveis de ambiente, que têm precedência sobre os arquivos de configuração:
+
 ```bash
+# Token da API (Digital Ocean)
+export DIGITALOCEAN_TOKEN="seu_token"
+
+# Credenciais AWS
 export AWS_ACCESS_KEY_ID="seu_access_key"
 export AWS_SECRET_ACCESS_KEY="seu_secret_key"
 export AWS_REGION="us-east-1"
-```
 
-**Para GCP:**
-```bash
+# Credenciais GCP
 export GOOGLE_APPLICATION_CREDENTIALS="/caminho/para/credentials.json"
 export GOOGLE_PROJECT="seu-projeto-gcp"
+
+# Configurações de alerta
+export ALERT_EMAIL="seu_email@exemplo.com"
+export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/XXX/YYY/ZZZ"
 ```
+
+## Estratégia Multi-cloud
+
+A infraestrutura suporta múltiplos provedores através de uma arquitetura modular:
+
+1. **Camada de Abstração**: Define interfaces comuns para todos os provedores
+2. **Implementações Específicas**: Cada provedor tem sua implementação
+3. **Seleção Dinâmica**: O provedor ativo é selecionado via configuração
+
+Para alternar entre provedores:
+
+```bash
+# Usando Digital Ocean
+terraform apply -var="environment=prod"
+
+# Alternativamente, edite o arquivo config.yaml:
+# provider:
+#   active: "aws"  # Mudar para aws, gcp, ou digitalocean
+```
+
+## Otimização de Custos
+
+O projeto implementa várias estratégias de otimização:
+
+1. **Ambientes Diferenciados**:
+
+    - **Dev**: Recursos mínimos, auto-desligamento
+    - **Staging**: Recursos moderados, auto-scaling
+    - **Prod**: Alta disponibilidade, proteção contra exclusão
+
+2. **Monitoramento de Custos**:
+
+    - Alertas de orçamento
+    - Detecção de anomalias
+    - Relatórios periódicos
+
+3. **Reservas e Spots**:
+
+    - Instâncias spot para ambientes não-produtivos
+    - Reservas para workloads estáveis em produção
+
+4. **Auto-scaling**:
+    - Escala baseada em demanda
+    - Escala para zero em períodos ociosos (dev/staging)
+
+## Segurança
+
+### Principais Medidas de Segurança
+
+1. **Segredos e Tokens**:
+
+    - Armazenados em Secret Manager/Vault
+    - Rotação automática de credenciais
+    - Nunca comprometidos no código-fonte
+
+2. **Rede**:
+
+    - Recursos críticos em subnets privadas
+    - Acessos restritos por CIDR/Security Groups
+    - Exposto apenas o necessário
+
+3. **Acesso**:
+
+    - Menor privilégio possível
+    - 2FA para acessos administrativos
+    - Logs de auditoria
+
+4. **Conformidade**:
+    - Validação com ferramentas como:
+        - TFLint
+        - Terrascan
+        - Checkov
+        - TFSec
+
+### Rotação de Credenciais
+
+O módulo `security/credential_rotation` implementa rotação automática de tokens:
+
+1. Cria novos tokens periodicamente
+2. Atualiza as referências
+3. Revoga tokens antigos
+4. Notifica administradores
+
+## Implementação por Ambientes
+
+### Ambiente de Desenvolvimento (dev)
+
+- **Objetivos**: Custo mínimo, facilidade de uso
+- **Características**:
+    - Recursos mínimos (menor tamanho de instâncias)
+    - Único nó Kubernetes
+    - Sem redundância
+    - Sem backups automáticos
+    - Possibilidade de auto-desligamento
+
+### Ambiente de Homologação (staging)
+
+- **Objetivos**: Similar à produção, custos controlados
+- **Características**:
+    - Configuração similar à produção
+    - Escalabilidade reduzida
+    - Backups menos frequentes
+    - Auto-scaling limitado
+
+### Ambiente de Produção (prod)
+
+- **Objetivos**: Confiabilidade, segurança, disponibilidade
+- **Características**:
+    - Multi-AZ/região
+    - Auto-scaling completo
+    - Backups frequentes
+    - Monitoramento avançado
+    - Proteção contra exclusão acidental
+
+## Processo de CI/CD
+
+O projeto utiliza GitHub Actions para automação, com pipelines que:
+
+1. **Validam** o código Terraform
+2. **Planejam** as mudanças de infraestrutura
+3. **Aplicam** as mudanças aprovadas
+4. **Validam** a infraestrutura pós-deploy
+
+Fluxo completo:
+
+```
+Commit → Validação → Plano → Aprovação Manual → Apply → Testes
+```
+
+## Hooks de Pre-Commit
+
+O projeto utiliza hooks de pre-commit para manter qualidade do código:
+
+- **terraform_fmt**: Formata código Terraform
+- **terraform_validate**: Valida a sintaxe
+- **terraform_docs**: Atualiza documentação automática
+- **terraform_tflint**: Executa linter customizado
+- **terrascan**: Verifica conformidade de segurança
+- **terraform_tfsec**: Análise de segurança estática
+- **terraform_checkov**: Analisa conformidade com políticas
+- **shellcheck**: Valida scripts shell
+- **gitleaks**: Detecta senhas e tokens expostos
+- **typos**: Verifica erros ortográficos
+- **commitizen**: Valida formato dos commits
+- **markdownlint**: Verifica arquivos Markdown
+- **infracost**: Análise de custos
+
+## Uso
+
+### Pré-requisitos
+
+- Terraform v1.0.0+
+- Credenciais configuradas para o(s) provedor(es) desejado(s)
+- Variáveis de ambiente configuradas conforme necessário
 
 ### Configuração Inicial
 
-1. Escolha o ambiente e o provedor em `environments/<ambiente>/config.yaml`
-2. Configure as variáveis de ambiente necessárias (veja acima)
+1. Configure as variáveis de ambiente necessárias
+2. Escolha o ambiente e provedor desejados
 3. Inicialize o Terraform:
 
 ```bash
 terraform init
 ```
 
-### Planejamento e Aplicação
+### Aplicando Alterações
 
-Revise as mudanças a serem aplicadas:
+Visualize as mudanças:
 
 ```bash
-terraform plan -out=plan.tfplan
+terraform plan -var="environment=dev" -out=plan.tfplan
 ```
 
 Aplique as mudanças:
@@ -181,55 +396,140 @@ Aplique as mudanças:
 terraform apply plan.tfplan
 ```
 
-### Usando múltiplos provedores
+### Destruindo Recursos
 
-Para alternar entre provedores, modifique o parâmetro `active` no arquivo de configuração do ambiente:
+Para ambientes temporários:
 
-```yaml
-provider:
-  active: aws  # Alternativas: gcp, digitalocean
-  aws:
-    region: us-east-1
-    profile: default
-  # Outras configurações...
+```bash
+terraform destroy -var="environment=dev"
 ```
 
-## Práticas de Segurança
+### Trabalhando com Workspaces
 
-- Backend remoto S3/DynamoDB para armazenamento seguro do estado do Terraform
-- Proteção contra exclusão em recursos críticos em produção
-- Redes isoladas com acesso controlado
-- Credenciais gerenciadas via variáveis de ambiente (recomendado) ou arquivos externos (não versionados)
+Para gerenciar múltiplos estados:
 
-### Melhores Práticas de Segurança
+```bash
+# Criar workspace para cada ambiente
+terraform workspace new dev
+terraform workspace new staging
+terraform workspace new prod
 
-1. **Nunca comite credenciais ou tokens no repositório**
-2. **Ative a autenticação de dois fatores (2FA) para todas as contas de provedores de nuvem**
-3. **Use o menor privilégio possível para credenciais de acesso**
-4. **Rotacione periodicamente as credenciais e tokens de acesso**
+# Selecionar workspace
+terraform workspace select dev
 
-## Monitoramento de Custos
+# Aplicar no workspace atual
+terraform apply -var="environment=${terraform.workspace}"
+```
 
-- Alertas via e-mail e Slack quando os custos se aproximam dos limites configurados
-- Relatórios semanais de gastos e recomendações de otimização
-- Tags automáticas para facilitar o rastreamento de custos por ambiente/projeto
+## Monitoramento e Operação
 
-### Limites de Custo Padrão
+### Dashboards
 
-| Ambiente | Limite Mensal | Alertas em % |
-|----------|---------------|--------------|
-| dev      | $50 USD       | 50%, 80%, 90% |
-| staging  | $100 USD      | 50%, 80%, 90% |
-| prod     | $300 USD      | 50%, 70%, 90% |
+O módulo `monitoring` configura dashboards para:
+
+- Métricas de recursos (CPU, memória, disco)
+- Utilização de Kubernetes
+- Performance de banco de dados
+- Custos por serviço/recurso
+
+### Alertas
+
+Configurados alertas para:
+
+- Alta utilização de recursos
+- Falhas de saúde em serviços
+- Estouros de orçamento
+- Falhas em backups
+
+### Recuperação de Desastres
+
+Implementada estratégia de DR que inclui:
+
+- Backups automáticos
+- Retenção configurável
+- Restauração testada e documentada
+- Procedimentos para failover
+
+## Best Practices Implementadas
+
+1. **Modularização**:
+
+    - Componentes isolados e reutilizáveis
+    - Interfaces consistentes
+
+2. **Nomeação Consistente**:
+
+    - Convenção clara para todos os recursos
+    - Prefixos por ambiente/projeto
+
+3. **Tagging**:
+
+    - Todos os recursos recebem tags para:
+        - Ambiente
+        - Projeto
+        - Gerenciado por (Terraform)
+        - Data de criação
+
+4. **Variáveis Padronizadas**:
+
+    - Interface comum entre módulos
+    - Defaults razoáveis
+
+5. **Validações**:
+    - Validação de inputs
+    - Testes automatizados
+    - Linting e formatação
+
+## Limitações Conhecidas
+
+1. **Migração Entre Provedores**:
+
+    - Requer planejamento para migração de dados
+    - Pode exigir downtime em alguns casos
+
+2. **Estado do Terraform**:
+
+    - Armazenado em backend S3/Spaces
+    - Potencial bloqueio de estado em equipes grandes
+
+3. **Recursos Específicos de Provedores**:
+    - Alguns recursos não têm equivalentes entre provedores
+    - Pode exigir ajustes para recursos específicos
+
+## Futuras Melhorias
+
+1. **Automatização Adicional**:
+
+    - Backup/restore automatizado
+    - Rollbacks automáticos
+    - Validação pós-deploy mais abrangente
+
+2. **Observabilidade**:
+
+    - Integração com sistemas de APM
+    - Tracing distribuído
+    - Logs centralizados
+
+3. **Segurança**:
+
+    - Escaneamento contínuo de vulnerabilidades
+    - Políticas de Kubernetes mais restritivas
+    - Integração com ferramentas SAST/DAST
+
+4. **Otimização**:
+    - Rightsizing automático baseado em telemetria
+    - Hibernação programada para ambientes não-produtivos
+    - Reservas automáticas baseadas em uso histórico
 
 ## Solução de Problemas Comuns
 
 ### Backend S3 não inicializa
 
-Se você encontrar erros com o backend S3, verifique:
-1. Se o bucket existe e você tem acesso a ele
-2. Se as credenciais AWS estão configuradas corretamente
-3. Se a região do bucket corresponde à configuração
+Se você encontrar erros com o backend S3:
+
+1. Verifique se o bucket existe
+2. Confirme que suas credenciais têm acesso
+3. Verifique se a região está correta
 
 ```bash
 # Verificar se o bucket existe
@@ -241,18 +541,41 @@ aws s3 mb s3://terraform-state-boilerplate-nestjs --region us-east-1
 
 ### Erros de token expirado
 
-Se receber erros de autenticação do provedor, verifique:
-1. Se o token configurado é válido
-2. Se o token tem as permissões necessárias
-3. Se a variável de ambiente está definida corretamente
+Se receber erros de autenticação:
 
-## Contatos e Suporte
+1. Verifique se o token é válido
+2. Confirme que o token tem permissões suficientes
+3. Renove o token conforme necessário
 
-Para dúvidas ou problemas relacionados à infraestrutura, entre em contato com a equipe DevOps.
+### Conflitos de estado
+
+Se múltiplas pessoas estão trabalhando:
+
+1. Use o backend remoto com bloqueio de estado
+2. Divida estados por ambiente/componente
+3. Comunique-se antes de alterações grandes
+
+## Contribuição
+
+Para contribuir com o código de infraestrutura:
+
+1. Faça fork do repositório
+2. Crie um branch para sua feature
+3. Implemente suas alterações seguindo as convenções
+4. Execute os hooks de pré-commit
+5. Abra um PR com descrição detalhada
+
+## Contato e Suporte
+
+Para questões relacionadas à infraestrutura, entre em contato com a equipe DevOps.
+
+## Licença
+
+Este código de infraestrutura é distribuído sob a mesma licença do projeto principal.
 
 ## Histórico de Atualizações
 
-| Data       | Versão | Descrição das Alterações                 |
-|------------|--------|------------------------------------------|
-| 2023-12-01 | 1.0    | Configuração inicial                     |
-| 2024-06-01 | 1.1    | Melhorias na documentação e segurança    |
+| Data       | Versão | Descrição das Alterações              |
+| ---------- | ------ | ------------------------------------- |
+| 2023-12-01 | 1.0    | Configuração inicial                  |
+| 2024-06-01 | 1.1    | Melhorias na documentação e segurança |

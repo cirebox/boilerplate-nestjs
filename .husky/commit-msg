@@ -1,1 +1,18 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Verifica padrão convencional de commits
 npx --no -- commitlint --edit $1
+
+# Verifica tamanho da mensagem
+COMMIT_MSG_FILE=$1
+FIRST_LINE=$(head -n1 $COMMIT_MSG_FILE)
+if [ ${#FIRST_LINE} -gt 72 ]; then
+  echo "❌ A primeira linha da mensagem de commit deve ter no máximo 72 caracteres"
+  exit 1
+fi
+
+if [ ${#FIRST_LINE} -lt 10 ]; then
+  echo "❌ A primeira linha da mensagem de commit deve ter pelo menos 10 caracteres"
+  exit 1
+fi

@@ -1,1 +1,30 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Executa lint-staged para verificar apenas arquivos modificados
+echo "🔍 Executa lint-staged para verificar apenas arquivos modificados..."
+npx lint-staged
+
+# Verifica se existem segredos no código
+#echo "🔍 Verificando se existem segredos no código..."
+#npx gitleaks protect --staged --verbose
+
+# Valide o esquema Prisma
+echo "🔍 Validando o esquema Prisma..."
+npx prisma validate
+
+# Execute verificações de tipos TypeScript
+echo "🔍 Verificações de tipos TypeScript..."
+npx tsc --noEmit
+
+# Verifica tamanho máximo de arquivos (5MB)
+echo "🔍 Verificando tamanho máximo de arquivos (5MB)..."
+find . -type f -not -path '*/node_modules/*' -not -path '*/\.*' -not -path '*/dist/*' -size +5M | grep -v '.git/' > /dev/null && echo '❌ Arquivos muito grandes encontrados (>5MB)' && exit 1 || echo '✅ Nenhum arquivo grande encontrado'
+
+# Verifica TODOs/FIXMEs nos arquivos modificados
+echo "🔍 Verificando TODOs/FIXMEs nos arquivos modificados..."
+git diff --cached --name-only | xargs grep -l "TODO\|FIXME" && echo "⚠️ Aviso: TODOs/FIXMEs encontrados nos arquivos modificados"
+
+# Execute testes e build como já configurado
+echo "🔍 Executando testes, lint e build..."
 npm test && npm run lint && npm run build

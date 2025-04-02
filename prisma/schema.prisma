@@ -43,7 +43,7 @@ generator client {
 
 // Configuração para PostgreSQL (para testes com a infraestrutura do Terraform)
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
