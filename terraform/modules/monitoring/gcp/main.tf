@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 4.0"
-    }
-  }
-}
-
 # Policy de notificação para alertas
 resource "google_monitoring_notification_channel" "email" {
   count        = length(var.notification_emails)

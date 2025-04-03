@@ -43,26 +43,26 @@ module "load_balancer" {
   source = "../../../modules/load_balancing/azure"
 
   # Configuração geral
-  name                = "example-lb"
-  environment         = "development"
-  
+  name        = "example-lb"
+  environment = "development"
+
   # Configurações específicas do Azure
-  resource_group_name  = azurerm_resource_group.example.name
-  location             = azurerm_resource_group.example.location
-  public_ip_id         = azurerm_public_ip.example.id
-  subnet_id            = azurerm_subnet.example.id
-  enable_https         = true
-  https_certificate    = null # Para uso em produção, configure um certificado
-  
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  public_ip_id        = azurerm_public_ip.example.id
+  subnet_id           = azurerm_subnet.example.id
+  enable_https        = true
+  https_certificate   = null # Para uso em produção, configure um certificado
+
   backend_address_pool_name = "example-backend-pool"
-  
-  health_probe_name           = "example-health-probe"
-  health_probe_protocol       = "Http"
-  health_probe_port           = 80
-  health_probe_request_path   = "/"
-  health_probe_interval       = 15
+
+  health_probe_name                = "example-health-probe"
+  health_probe_protocol            = "Http"
+  health_probe_port                = 80
+  health_probe_request_path        = "/"
+  health_probe_interval            = 15
   health_probe_unhealthy_threshold = 2
-  
+
   frontend_port_name     = "example-frontend-port"
   frontend_port          = 80
   frontend_port_protocol = "Tcp"
@@ -99,7 +99,7 @@ resource "azurerm_linux_virtual_machine" "example" {
   location            = azurerm_resource_group.example.location
   size                = "Standard_B1s"
   admin_username      = "adminuser"
-  
+
   network_interface_ids = [
     azurerm_network_interface.example[count.index].id,
   ]

@@ -110,10 +110,10 @@ variable "healthcheck" {
 variable "sticky_sessions" {
   description = "Configuração de sessões persistentes (sticky sessions)"
   type = object({
-    enabled              = optional(bool, false)
-    type                 = optional(string, "cookies")
-    cookie_name          = optional(string, "lb_session")
-    cookie_ttl_seconds   = optional(number, 3600)
+    enabled            = optional(bool, false)
+    type               = optional(string, "cookies")
+    cookie_name        = optional(string, "lb_session")
+    cookie_ttl_seconds = optional(number, 3600)
   })
   default = {
     enabled            = false
@@ -180,15 +180,15 @@ variable "enable_deletion_protection" {
 variable "access_logs" {
   description = "Configuração para logs de acesso"
   type = object({
-    enabled       = optional(bool, false)
-    bucket        = optional(string, "")
-    prefix        = optional(string, "lb-logs")
+    enabled        = optional(bool, false)
+    bucket         = optional(string, "")
+    prefix         = optional(string, "lb-logs")
     retention_days = optional(number, 30)
   })
   default = {
-    enabled       = false
-    bucket        = ""
-    prefix        = "lb-logs"
+    enabled        = false
+    bucket         = ""
+    prefix         = "lb-logs"
     retention_days = 30
   }
 }
@@ -202,10 +202,10 @@ variable "cloudwatch_monitoring" {
 variable "firewall_rules" {
   description = "Regras de firewall para o load balancer"
   type = list(object({
-    source_ips   = list(string)
-    port_range   = string
-    protocol     = string
-    description  = optional(string, "")
+    source_ips  = list(string)
+    port_range  = string
+    protocol    = string
+    description = optional(string, "")
   }))
   default = []
 }
@@ -256,7 +256,7 @@ variable "azure_capacity_units" {
 variable "azure_autoscale" {
   description = "Configuração de autoscale para o Application Gateway (somente Azure)"
   type = object({
-    enabled  = bool
+    enabled      = bool
     min_capacity = number
     max_capacity = number
   })
@@ -296,13 +296,13 @@ variable "azure_waf_configuration" {
 variable "azure_frontend_ip_configuration" {
   description = "Configuração de IP público/privado para o load balancer (somente Azure)"
   type = object({
-    public_ip_name       = optional(string, "")
-    create_public_ip     = optional(bool, true)
-    private_ip_address   = optional(string, "")
+    public_ip_name        = optional(string, "")
+    create_public_ip      = optional(bool, true)
+    private_ip_address    = optional(string, "")
     private_ip_allocation = optional(string, "Dynamic")
   })
   default = {
-    create_public_ip     = true
+    create_public_ip      = true
     private_ip_allocation = "Dynamic"
   }
 }

@@ -7,11 +7,11 @@ output "database_snapshot_trigger" {
 
 output "volume_snapshots" {
   description = "IDs dos snapshots de volume criados"
-  value       = var.enable_volume_snapshots ? {
-    for key, snapshot in digitalocean_volume_snapshot.volume_snapshots : 
+  value = var.enable_volume_snapshots ? {
+    for key, snapshot in digitalocean_volume_snapshot.volume_snapshots :
     key => {
-      id = snapshot.id
-      name = snapshot.name
+      id         = snapshot.id
+      name       = snapshot.name
       created_at = snapshot.created_at
     }
   } : {}
@@ -23,5 +23,8 @@ output "k8s_backup_installed" {
 }
 
 output "k8s_backup_schedule" {
-  
+  description = "Configuração do agendamento de backups do Kubernetes"
+  value       = var.enable_k8s_config_backups ? helm_release.velero[0].set[3].value : null
+}
+
 

@@ -1,33 +1,18 @@
-# Módulo para gerenciamento de snapshots automáticos para recuperação de desastres
-# Este módulo implementa snapshots regulares para bancos de dados, volumes e configurações do Kubernetes
+# Módulo de recuperação de desastres - Snapshots
 
-terraform {
-  required_providers {
-    digitalocean = {
-      source  = "digitalocean/digitalocean"
-      version = ">= 2.0.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = ">= 2.0.0"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = ">= 2.0.0"
-    }
-  }
-}
+# O bloco terraform com required_providers foi removido, pois agora as versões dos providers
+# são gerenciadas centralmente no arquivo versions.tf na raiz do diretório terraform
 
 locals {
   snapshot_prefix = "${var.environment}-${var.project_name}"
   current_time    = timestamp()
-  
+
   # Calcula a data de expiração para snapshots antigos baseado na política de retenção
-  expiration_date = timeadd(local.current_time, "${-1 * var.retention_days * 24}h")
-  
+  expiration_date = timeadd(local.current_time, "${- 1 * var.retention_days * 24}h")
+
   # Labels comuns para todos os snapshots
   common_tags = {
-    "managed-by" = "terraform"
+    "managed-by"  = "terraform"
     "environment" = var.environment
     "project"     = var.project_name
     "module"      = "disaster-recovery"
@@ -39,7 +24,7 @@ locals {
 resource "digitalocean_database_cluster_firewall" "backup_access" {
   count      = var.enable_db_snapshots ? 1 : 0
   cluster_id = var.database_cluster_id
-  
+
   rule {
     type  = "ip_addr"
     value = var.backup_server_ip
@@ -48,12 +33,12 @@ resource "digitalocean_database_cluster_firewall" "backup_access" {
 
 resource "null_resource" "database_snapshot" {
   count = var.enable_db_snapshots ? 1 : 0
-  
+
   triggers = {
     # Gera um snapshot baseado no cronograma configurado
     schedule_trigger = formatdate("YYYY-MM-DD-hh-mm", timestamp())
   }
-  
+
   provisioner "local-exec" {
     command = <<-EOT
       curl -X POST \
@@ -63,7 +48,7 @@ resource "null_resource" "database_snapshot" {
         "https://api.digitalocean.com/v2/databases/${var.database_cluster_id}/backups"
     EOT
   }
-  
+
   # Executa conforme o cronograma configurado
   lifecycle {
     create_before_destroy = true
@@ -73,36 +58,36 @@ resource "null_resource" "database_snapshot" {
 # 2. Snapshots de Volumes Persistentes
 resource "digitalocean_volume_snapshot" "volume_snapshots" {
   for_each = var.enable_volume_snapshots ? var.volumes_to_snapshot : {}
-  
-  volume_id   = each.value.id
-  name        = "${local.snapshot_prefix}-vol-snapshot-${each.key}-${formatdate("YYYYMMDDhhmm", timestamp())}"
-  tags        = [for k, v in merge(local.common_tags, each.value.tags) : "${k}:${v}"]
+
+  volume_id = each.value.id
+  name      = "${local.snapshot_prefix}-vol-snapshot-${each.key}-${formatdate("YYYYMMDDhhmm", timestamp())}"
+  tags      = [for k, v in merge(local.common_tags, each.value.tags) : "${k}:${v}"]
 }
 
 # 3. Backup das configurações do Kubernetes usando Velero
 resource "helm_release" "velero" {
-  count      = var.enable_k8s_config_backups ? 1 : 0
-  name       = "velero"
-  repository = "https://vmware-tanzu.github.io/helm-charts"
-  chart      = "velero"
-  namespace  = "velero"
+  count            = var.enable_k8s_config_backups ? 1 : 0
+  name             = "velero"
+  repository       = "https://vmware-tanzu.github.io/helm-charts"
+  chart            = "velero"
+  namespace        = "velero"
   create_namespace = true
-  
+
   set {
     name  = "configuration.provider"
     value = "digitalocean"
   }
-  
+
   set {
     name  = "configuration.backupStorageLocation.bucket"
     value = var.backup_bucket_name
   }
-  
+
   set {
     name  = "configuration.backupStorageLocation.config.region"
     value = var.region
   }
-  
+
   set {
     name  = "credentials.secretContents.cloud"
     value = <<-EOF
@@ -111,12 +96,12 @@ resource "helm_release" "velero" {
       aws_secret_access_key=${var.spaces_secret_key}
     EOF
   }
-  
+
   set {
     name  = "schedules.daily-backup.schedule"
     value = var.k8s_backup_cron_schedule
   }
-  
+
   set {
     name  = "schedules.daily-backup.template.ttl"
     value = "${var.retention_days * 24}h0m0s"
@@ -129,12 +114,12 @@ resource "null_resource" "cleanup_old_snapshots" {
     digitalocean_volume_snapshot.volume_snapshots,
     null_resource.database_snapshot
   ]
-  
+
   triggers = {
     # Executa a limpeza uma vez por dia
     daily_trigger = formatdate("YYYY-MM-DD", timestamp())
   }
-  
+
   provisioner "local-exec" {
     command = <<-EOT
       # Lista e remove snapshots de volumes expirados
@@ -177,12 +162,12 @@ resource "null_resource" "backup_status_check" {
     digitalocean_volume_snapshot.volume_snapshots,
     helm_release.velero
   ]
-  
+
   triggers = {
     # Verifica o status dos backups diariamente
     daily_check = formatdate("YYYY-MM-DD", timestamp())
   }
-  
+
   provisioner "local-exec" {
     command = <<-EOT
       # Verificar status dos backups de banco de dados

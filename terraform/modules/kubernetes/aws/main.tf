@@ -6,7 +6,7 @@
  */
 
 locals {
-  cluster_name = "${var.project_name}-${var.environment}-eks"
+  cluster_name                  = "${var.project_name}-${var.environment}-eks"
   k8s_service_account_namespace = "kube-system"
   k8s_service_account_name      = "cluster-autoscaler"
 }
@@ -136,7 +136,7 @@ resource "aws_eks_cluster" "main" {
 
   # Proteção contra destruição acidental do cluster - usando valor fixo em vez de expressão condicional
   lifecycle {
-    prevent_destroy = false  # Alterado de var.environment == "prod" ? true : false para um valor fixo
+    prevent_destroy = false # Alterado de var.environment == "prod" ? true : false para um valor fixo
     # Nota: Para ambiente de produção, recomenda-se alterar para true manualmente ou usar módulos separados
   }
 
@@ -149,7 +149,7 @@ resource "aws_eks_node_group" "primary" {
   node_group_name = "${local.cluster_name}-primary"
   node_role_arn   = aws_iam_role.eks_nodes.arn
   subnet_ids      = var.subnet_ids
-  
+
   # Configuração de instâncias
   ami_type       = "AL2_x86_64" # Amazon Linux 2 para melhor compatibilidade
   instance_types = var.node_instance_types
@@ -188,7 +188,7 @@ resource "aws_eks_node_group" "primary" {
 resource "aws_iam_policy" "cluster_autoscaler" {
   name        = "${local.cluster_name}-cluster-autoscaler"
   description = "Policy para permitir o funcionamento do Cluster Autoscaler"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -207,14 +207,14 @@ resource "aws_iam_policy" "cluster_autoscaler" {
       }
     ]
   })
-  
+
   tags = var.tags
 }
 
 # IAM Role para o Cluster Autoscaler (IRSA - IAM Roles for Service Accounts)
 resource "aws_iam_role" "cluster_autoscaler" {
   name = "${local.cluster_name}-cluster-autoscaler"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -226,13 +226,13 @@ resource "aws_iam_role" "cluster_autoscaler" {
         }
         Condition = {
           StringEquals = {
-            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:sub": "system:serviceaccount:${local.k8s_service_account_namespace}:${local.k8s_service_account_name}"
+            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:sub" : "system:serviceaccount:${local.k8s_service_account_namespace}:${local.k8s_service_account_name}"
           }
         }
       }
     ]
   })
-  
+
   tags = var.tags
 }
 
@@ -253,12 +253,12 @@ resource "aws_cloudwatch_metric_alarm" "node_cpu_utilization" {
   statistic           = "Average"
   threshold           = "80"
   alarm_description   = "CPU utilization is too high on EKS nodes, consider scaling"
-  
+
   # Usando dimensões corretas para monitorar o EKS
   dimensions = {
     AutoScalingGroupName = "${local.cluster_name}-primary-*"
   }
-  
+
   alarm_actions = []
   tags          = var.tags
 }

@@ -83,11 +83,11 @@ variable "health_check" {
 variable "backend_services" {
   description = "Configurações dos serviços de backend para o load balancer"
   type = list(object({
-    name            = string
-    port            = number
-    protocol        = string
-    timeout_sec     = number
-    enable_logging  = bool
+    name                = string
+    port                = number
+    protocol            = string
+    timeout_sec         = number
+    enable_logging      = bool
     logging_sample_rate = number
   }))
   default = []
@@ -96,10 +96,10 @@ variable "backend_services" {
 variable "instance_groups" {
   description = "Lista de grupos de instâncias a serem associados ao backend service"
   type = list(object({
-    name       = string
-    zone       = string
-    max_rate   = number
-    capacity   = number
+    name     = string
+    zone     = string
+    max_rate = number
+    capacity = number
   }))
   default = []
 }

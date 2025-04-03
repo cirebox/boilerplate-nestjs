@@ -227,15 +227,15 @@ variable "stickiness" {
 variable "access_logs" {
   description = "Configurações para logs de acesso do load balancer"
   type = object({
-    enabled       = bool
-    bucket        = string
-    prefix        = string
+    enabled        = bool
+    bucket         = string
+    prefix         = string
     retention_days = number
   })
   default = {
-    enabled       = false
-    bucket        = ""
-    prefix        = ""
+    enabled        = false
+    bucket         = ""
+    prefix         = ""
     retention_days = 30
   }
 }

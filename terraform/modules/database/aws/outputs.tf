@@ -47,29 +47,29 @@ output "secret_arn" {
 
 output "estimated_monthly_cost" {
   description = "Custo mensal estimado do banco de dados"
-  value       = {
+  value = {
     main_instance = {
-      type  = var.instance_type
-      cost  = var.instance_type == "db.t3.micro" ? "15-25 USD/mês" : (
-              var.instance_type == "db.t3.small" ? "30-40 USD/mês" : (
-              var.instance_type == "db.t3.medium" ? "60-80 USD/mês" : "Verificar calculadora AWS")
-              )
+      type = var.instance_type
+      cost = var.instance_type == "db.t3.micro" ? "15-25 USD/mês" : (
+        var.instance_type == "db.t3.small" ? "30-40 USD/mês" : (
+        var.instance_type == "db.t3.medium" ? "60-80 USD/mês" : "Verificar calculadora AWS")
+      )
     }
     replicas = var.enable_replicas ? {
       count = var.replica_count
       type  = var.replica_instance_type != "" ? var.replica_instance_type : var.instance_type
-      cost  = (var.replica_instance_type != "" ? var.replica_instance_type : var.instance_type) == "db.t3.micro" ? "15-25 USD/mês por réplica" : (
-              (var.replica_instance_type != "" ? var.replica_instance_type : var.instance_type) == "db.t3.small" ? "30-40 USD/mês por réplica" : (
-              (var.replica_instance_type != "" ? var.replica_instance_type : var.instance_type) == "db.t3.medium" ? "60-80 USD/mês por réplica" : "Verificar calculadora AWS")
-              )
+      cost = (var.replica_instance_type != "" ? var.replica_instance_type : var.instance_type) == "db.t3.micro" ? "15-25 USD/mês por réplica" : (
+        (var.replica_instance_type != "" ? var.replica_instance_type : var.instance_type) == "db.t3.small" ? "30-40 USD/mês por réplica" : (
+        (var.replica_instance_type != "" ? var.replica_instance_type : var.instance_type) == "db.t3.medium" ? "60-80 USD/mês por réplica" : "Verificar calculadora AWS")
+      )
     } : null
     storage = {
-      initial_gb = var.allocated_storage
+      initial_gb  = var.allocated_storage
       cost_per_gb = "0.115-0.23 USD/GB/mês (dependendo da região)"
     }
     backup = {
       retention_days = var.backup_retention_days
-      cost = "Grátis para até 100% do tamanho do banco. Valores adicionais: 0.095 USD/GB/mês"
+      cost           = "Grátis para até 100% do tamanho do banco. Valores adicionais: 0.095 USD/GB/mês"
     }
   }
 }

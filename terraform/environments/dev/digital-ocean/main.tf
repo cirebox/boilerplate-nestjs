@@ -47,12 +47,12 @@ provider "kubernetes" {
 module "network" {
   source = "../../../modules/network/digital-ocean"
 
-  project_name          = var.project_name
-  environment           = "dev"
-  region                = var.region
-  vpc_cidr              = "10.0.0.0/16"
-  create_loadbalancer   = false
-  ssh_source_addresses  = var.ssh_source_addresses
+  project_name         = var.project_name
+  environment          = "dev"
+  region               = var.region
+  vpc_cidr             = "10.0.0.0/16"
+  create_loadbalancer  = false
+  ssh_source_addresses = var.ssh_source_addresses
 }
 
 # Módulo de banco de dados (configuração mínima para desenvolvimento)
@@ -74,24 +74,24 @@ module "database" {
 module "kubernetes" {
   source = "../../../modules/kubernetes/digital-ocean"
 
-  project_name      = var.project_name
-  environment       = "dev"
-  region            = var.region
-  vpc_id            = module.network.vpc_id
-  node_size         = "s-1vcpu-2gb" # Menor tamanho para economizar custos
-  node_count        = 1             # Apenas um nó em desenvolvimento
+  project_name       = var.project_name
+  environment        = "dev"
+  region             = var.region
+  vpc_id             = module.network.vpc_id
+  node_size          = "s-1vcpu-2gb" # Menor tamanho para economizar custos
+  node_count         = 1             # Apenas um nó em desenvolvimento
   kubernetes_version = "1.27"
-  
+
   # Não é necessário criar pool crítico em desenvolvimento
   create_critical_pool = false
-  
+
   # Integrar com registry apenas se especificado
   create_registry_integration = var.create_registry_integration
   registry_name               = var.registry_name
-  
+
   # Alertas básicos
   alert_emails = var.alert_emails
-  
+
   tags = ["dev", "terraform-managed"]
 
   depends_on = [module.network]
@@ -101,14 +101,14 @@ module "kubernetes" {
 module "cost_monitor" {
   source = "../../../modules/cost_monitor/digital-ocean"
 
-  project_name        = var.project_name
-  environment         = var.environment
-  alert_emails        = var.alert_emails
-  slack_channel       = var.slack_channel
-  slack_webhook_url   = var.slack_webhook_url
-  budget_threshold    = 5    # Limite diário baixo para ambiente dev
-  monthly_budget_limit = 50  # Limite mensal baixo para ambiente dev
-  
+  project_name         = var.project_name
+  environment          = var.environment
+  alert_emails         = var.alert_emails
+  slack_channel        = var.slack_channel
+  slack_webhook_url    = var.slack_webhook_url
+  budget_threshold     = 5  # Limite diário baixo para ambiente dev
+  monthly_budget_limit = 50 # Limite mensal baixo para ambiente dev
+
   # Ativar detecção de desperdício para controle de custos
   enable_waste_detection = true
 

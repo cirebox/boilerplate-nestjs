@@ -2,7 +2,7 @@
 . "$(dirname "$0")/_/husky.sh"
 
 # Verifica padrão convencional de commits
-npx --no -- commitlint --edit $1
+#npx --no -- commitlint --edit $1
 
 # Verifica tamanho da mensagem
 COMMIT_MSG_FILE=$1

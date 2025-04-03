@@ -201,13 +201,3 @@ resource "azurerm_monitor_diagnostic_setting" "main" {
     }
   }
 }
-
-# Adicione o bloco terraform aqui para definir os provedores necessários
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 2.0"
-    }
-  }
-}

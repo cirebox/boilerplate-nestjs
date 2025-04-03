@@ -21,7 +21,7 @@ variable "initial_token" {
 variable "rotation_schedule" {
   description = "Expressão cron que define quando as credenciais serão rotacionadas"
   type        = string
-  default     = "0 0 1 * *"  # Por padrão, rotaciona no primeiro dia de cada mês
+  default     = "0 0 1 * *" # Por padrão, rotaciona no primeiro dia de cada mês
 }
 
 variable "token_expiration_days" {

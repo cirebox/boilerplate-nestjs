@@ -88,25 +88,25 @@ module "load_balancer" {
   provider_name = "azure"
   name          = "webapp-lb"
   environment   = "dev"
-  
+
   # Configurações específicas do Azure
   azure_resource_group_name = azurerm_resource_group.example.name
   azure_location            = azurerm_resource_group.example.location
   azure_virtual_network_id  = azurerm_virtual_network.example.id
   azure_subnet_id           = azurerm_subnet.backend.id
-  
+
   # Configuração dos targets (backends)
   azure_backend_addresses = [
     {
-      name      = "vm-1"
+      name       = "vm-1"
       ip_address = azurerm_network_interface.example[0].private_ip_address
     },
     {
-      name      = "vm-2"
+      name       = "vm-2"
       ip_address = azurerm_network_interface.example[1].private_ip_address
     }
   ]
-  
+
   # Configuração das portas e protocolos
   ports = {
     http = {
@@ -128,7 +128,7 @@ module "load_balancer" {
       }
     }
   }
-  
+
   # Configuração SSL (opcional)
   enable_ssl = true
   ssl_certificates = {
@@ -137,13 +137,13 @@ module "load_balancer" {
       key_vault_secret_id = "https://example-keyvault.vault.azure.net/secrets/example-cert"
     }
   }
-  
+
   # Configurações avançadas
   waf_enabled         = true
   waf_mode            = "Prevention"
   enable_http2        = true
   connection_draining = true
-  
+
   # Tags para recursos
   tags = {
     Environment = "Development"
@@ -185,15 +185,15 @@ resource "azurerm_app_service" "example" {
   app_service_plan_id = azurerm_app_service_plan.example.id
 
   site_config {
-    linux_fx_version = "NODE|14-lts"
+    linux_fx_version  = "NODE|14-lts"
     health_check_path = "/health"
   }
 
   app_settings = {
     "WEBSITE_NODE_DEFAULT_VERSION" = "~14"
-    "DATABASE_URL"                = "postgresql://user:password@db-host:5432/mydb"
-    "NODE_ENV"                    = "production"
-    "PORT"                        = "8080"
+    "DATABASE_URL"                 = "postgresql://user:password@db-host:5432/mydb"
+    "NODE_ENV"                     = "production"
+    "PORT"                         = "8080"
   }
 }
 

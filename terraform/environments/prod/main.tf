@@ -8,7 +8,7 @@ terraform {
       version = "~> 4.0"
     }
   }
-  
+
   # Configuração do backend remoto
   backend "s3" {
     bucket         = "terraform-state-boilerplate-nestjs"
@@ -21,8 +21,8 @@ terraform {
 
 # Carrega as configurações do arquivo config.yaml
 locals {
-  config = yamldecode(file("${path.module}/config.yaml"))
-  environment = "prod"
+  config       = yamldecode(file("${path.module}/config.yaml"))
+  environment  = "prod"
   project_name = "boilerplate-nestjs"
   tags = {
     Environment = local.environment
@@ -42,85 +42,85 @@ provider "google" {
 # Módulo de rede
 module "network" {
   source = "../../modules/network/gcp"
-  
-  environment = local.environment
+
+  environment  = local.environment
   project_name = local.project_name
-  vpc_cidr = local.config.network.vpc_cidr
-  tags = local.tags
+  vpc_cidr     = local.config.network.vpc_cidr
+  tags         = local.tags
 }
 
 # Módulo de banco de dados
 module "database" {
   source = "../../modules/database/gcp"
-  
-  environment = local.environment
-  project_name = local.project_name
-  project_id = local.config.provider.gcp.project
-  instance_type = local.config.database.instance_type
-  storage_gb = local.config.database.storage_gb
+
+  environment    = local.environment
+  project_name   = local.project_name
+  project_id     = local.config.provider.gcp.project
+  instance_type  = local.config.database.instance_type
+  storage_gb     = local.config.database.storage_gb
   engine_version = local.config.database.engine_version
-  vpc_self_link = module.network.vpc_self_link
-  tags = local.tags
-  
+  vpc_self_link  = module.network.vpc_self_link
+  tags           = local.tags
+
   # Configurações de controle de custos
   backup_retention_days = local.config.database.backup_retention_days
-  deletion_protection = local.config.database.deletion_protection
-  
+  deletion_protection   = local.config.database.deletion_protection
+
   # Configuração de escalabilidade
   max_allocated_storage = local.config.database.max_allocated_storage
-  
+
   depends_on = [module.network]
 }
 
 # Módulo de Kubernetes
 module "kubernetes" {
   source = "../../modules/kubernetes/gcp"
-  
-  environment = local.environment
-  project_name = local.project_name
-  project_id = local.config.provider.gcp.project
-  region = local.config.provider.gcp.region
-  cluster_version = local.config.kubernetes.version
+
+  environment         = local.environment
+  project_name        = local.project_name
+  project_id          = local.config.provider.gcp.project
+  region              = local.config.provider.gcp.region
+  cluster_version     = local.config.kubernetes.version
   node_instance_types = local.config.kubernetes.node_instance_types
-  min_nodes = local.config.kubernetes.min_nodes
-  max_nodes = local.config.kubernetes.max_nodes
-  desired_nodes = local.config.kubernetes.desired_nodes
-  vpc_self_link = module.network.vpc_self_link
-  subnet_self_link = module.network.private_subnet_self_link
-  tags = local.tags
-  
+  min_nodes           = local.config.kubernetes.min_nodes
+  max_nodes           = local.config.kubernetes.max_nodes
+  desired_nodes       = local.config.kubernetes.desired_nodes
+  vpc_self_link       = module.network.vpc_self_link
+  subnet_self_link    = module.network.private_subnet_self_link
+  tags                = local.tags
+
   depends_on = [module.network]
 }
 
 # Módulo de monitoramento de custos
 module "cost_monitor" {
   source = "../../modules/cost_monitor/gcp"
-  
-  environment = local.environment
-  project_name = local.project_name
-  project_id = local.config.provider.gcp.project
-  billing_account_id = local.config.provider.gcp.billing_account_id
-  budget_amount = local.config.cost.budget_amount
-  budget_currency = local.config.cost.budget_currency
+
+  environment             = local.environment
+  project_name            = local.project_name
+  project_id              = local.config.provider.gcp.project
+  billing_account_id      = local.config.provider.gcp.billing_account_id
+  budget_amount           = local.config.cost.budget_amount
+  budget_currency         = local.config.cost.budget_currency
   alert_threshold_percent = local.config.cost.alert_threshold_percent
-  alert_emails = local.config.cost.alert_emails
-  tags = local.tags
+  alert_emails            = local.config.cost.alert_emails
+  tags                    = local.tags
 }
 
 # Módulo de monitoramento
 module "monitoring" {
   source = "../../modules/monitoring/gcp"
-  
-  environment = local.environment
-  project_name = local.project_name
-  cpu_threshold = local.config.monitoring.alert_threshold_cpu
-  memory_threshold = local.config.monitoring.alert_threshold_memory
+
+  environment         = local.environment
+  project_name        = local.project_name
+  cpu_threshold       = local.config.monitoring.alert_threshold_cpu
+  memory_threshold    = local.config.monitoring.alert_threshold_memory
   notification_emails = local.config.cost.alert_emails
-  service_name = lookup(lookup(local.config.monitoring, "gcp", {}), "service_name", "${local.project_name}-${local.environment}-service")
-  cluster_name = lookup(lookup(local.config.monitoring, "gcp", {}), "cluster_name", "${local.project_name}-${local.environment}-cluster")
-  namespace = lookup(local.config.monitoring, "namespace", "production")
-  tags = local.tags
-  
+  service_name        = lookup(lookup(local.config.monitoring, "gcp", {}), "service_name", "${local.project_name}-${local.environment}-service")
+  cluster_name        = lookup(lookup(local.config.monitoring, "gcp", {}), "cluster_name", "${local.project_name}-${local.environment}-cluster")
+  namespace           = lookup(local.config.monitoring, "namespace", "production")
+  tags                = local.tags
+
   depends_on = [module.kubernetes]
 }
 

@@ -54,43 +54,19 @@
  * ```
  */
 
-terraform {
-  required_version = ">= 0.13.0"
-  
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 3.0.0"
-      configuration_aliases = [ aws ]
-    }
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 3.50.0"
-      configuration_aliases = [ google ]
-    }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 2.50.0"
-      configuration_aliases = [ azurerm ]
-    }
-    digitalocean = {
-      source  = "digitalocean/digitalocean"
-      version = ">= 2.0.0"
-      configuration_aliases = [ digitalocean ]
-    }
-  }
-}
+# O bloco terraform com required_providers foi removido, pois agora as versões dos providers
+# são gerenciadas centralmente no arquivo versions.tf na raiz do diretório terraform
 
 locals {
   providers = {
-    aws           = "aws"
-    gcp           = "gcp"
-    azure         = "azure"
-    digitalocean  = "digital-ocean"
+    aws          = "aws"
+    gcp          = "gcp"
+    azure        = "azure"
+    digitalocean = "digital-ocean"
   }
-  
+
   provider_path = lookup(local.providers, var.provider_name, "")
-  
+
   common_tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
@@ -101,7 +77,7 @@ locals {
 # Validação do provedor selecionado
 resource "null_resource" "provider_validation" {
   count = local.provider_path == "" ? 1 : 0
-  
+
   provisioner "local-exec" {
     command = "echo 'Erro: Provedor inválido. Valores permitidos: aws, gcp, azure, digitalocean' && exit 1"
   }
@@ -111,75 +87,75 @@ resource "null_resource" "provider_validation" {
 module "aws_load_balancer" {
   count  = var.provider_name == "aws" ? 1 : 0
   source = "./aws"
-  
-  name                  = var.name
-  environment           = var.environment
-  vpc_id                = var.aws_vpc_id
-  subnet_ids            = var.aws_subnet_ids
-  http_port             = var.http_port
-  https_port            = var.https_port
-  health_check          = var.health_check
+
+  name                       = var.name
+  environment                = var.environment
+  vpc_id                     = var.aws_vpc_id
+  subnet_ids                 = var.aws_subnet_ids
+  http_port                  = var.http_port
+  https_port                 = var.https_port
+  health_check               = var.health_check
   enable_deletion_protection = var.enable_deletion_protection
-  certificate_arn       = var.aws_certificate_arn
-  tags                  = merge(local.common_tags, var.tags)
+  certificate_arn            = var.aws_certificate_arn
+  tags                       = merge(local.common_tags, var.tags)
 }
 
 # Google Cloud Platform Load Balancer
 module "gcp_load_balancer" {
   count  = var.provider_name == "gcp" ? 1 : 0
   source = "./gcp"
-  
-  name                = var.name
-  environment         = var.environment
-  project             = var.gcp_project
-  network             = var.gcp_network
-  subnetwork          = var.gcp_subnetwork
-  http_port           = var.http_port
-  https_port          = var.https_port
-  health_check        = var.health_check
-  ssl_certificates    = var.gcp_ssl_certificates
-  tags                = merge(local.common_tags, var.tags)
+
+  name             = var.name
+  environment      = var.environment
+  project          = var.gcp_project
+  network          = var.gcp_network
+  subnetwork       = var.gcp_subnetwork
+  http_port        = var.http_port
+  https_port       = var.https_port
+  health_check     = var.health_check
+  ssl_certificates = var.gcp_ssl_certificates
+  tags             = merge(local.common_tags, var.tags)
 }
 
 # Azure Load Balancer
 module "azure_load_balancer" {
   count  = var.provider_name == "azure" ? 1 : 0
   source = "./azure"
-  
-  name                  = var.name
-  environment           = var.environment
-  resource_group_name   = var.azure_resource_group_name
-  location              = var.azure_location
-  subnet_id             = var.azure_subnet_id
-  http_port             = var.http_port
-  https_port            = var.https_port
-  health_check          = var.health_check
-  ssl_certificate       = var.azure_ssl_certificate
-  tags                  = merge(local.common_tags, var.tags)
+
+  name                = var.name
+  environment         = var.environment
+  resource_group_name = var.azure_resource_group_name
+  location            = var.azure_location
+  subnet_id           = var.azure_subnet_id
+  http_port           = var.http_port
+  https_port          = var.https_port
+  health_check        = var.health_check
+  ssl_certificate     = var.azure_ssl_certificate
+  tags                = merge(local.common_tags, var.tags)
 }
 
 # DigitalOcean Load Balancer
 module "digitalocean_load_balancer" {
   count  = var.provider_name == "digitalocean" ? 1 : 0
   source = "./digital-ocean"
-  
-  name                  = var.name
-  environment           = var.environment
-  region                = var.do_region
-  droplet_ids           = var.do_droplet_ids
-  http_port             = var.http_port
-  https_port            = var.https_port
-  health_check          = var.health_check
+
+  name                   = var.name
+  environment            = var.environment
+  region                 = var.do_region
+  droplet_ids            = var.do_droplet_ids
+  http_port              = var.http_port
+  https_port             = var.https_port
+  health_check           = var.health_check
   redirect_http_to_https = var.do_redirect_http_to_https
-  tags                  = merge(local.common_tags, var.tags)
+  tags                   = merge(local.common_tags, var.tags)
 }
 
 # Outputs são definidos com base no provedor selecionado
 locals {
   load_balancer = {
-    aws = var.provider_name == "aws" ? module.aws_load_balancer[0] : null
-    gcp = var.provider_name == "gcp" ? module.gcp_load_balancer[0] : null
-    azure = var.provider_name == "azure" ? module.azure_load_balancer[0] : null
+    aws          = var.provider_name == "aws" ? module.aws_load_balancer[0] : null
+    gcp          = var.provider_name == "gcp" ? module.gcp_load_balancer[0] : null
+    azure        = var.provider_name == "azure" ? module.azure_load_balancer[0] : null
     digitalocean = var.provider_name == "digitalocean" ? module.digitalocean_load_balancer[0] : null
   }
 }

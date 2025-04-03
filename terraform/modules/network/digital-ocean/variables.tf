@@ -76,18 +76,18 @@ variable "configure_email" {
 
 variable "mx_records" {
   description = "Lista de registros MX para configuração de email"
-  type        = list(object({
+  type = list(object({
     value    = string
     priority = number
   }))
-  default     = []
+  default = []
 }
 
 variable "txt_records" {
   description = "Lista de registros TXT para verificações de domínio"
-  type        = list(object({
+  type = list(object({
     name  = string
     value = string
   }))
-  default     = []
+  default = []
 }

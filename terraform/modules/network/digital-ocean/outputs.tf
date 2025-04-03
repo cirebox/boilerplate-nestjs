@@ -50,7 +50,7 @@ output "estimated_monthly_cost" {
     load_balancer = var.create_loadbalancer ? {
       type = var.environment == "prod" ? "lb-small" : "lb-nano"
       cost = var.environment == "prod" ? "$12/mês" : "$10/mês"
-    } : {
+      } : {
       type = "N/A"
       cost = "$0/mês"
     }

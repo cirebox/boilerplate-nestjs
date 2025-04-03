@@ -79,10 +79,10 @@ locals {
     "db-s-8vcpu-32gb" = 470
     "default"         = 25
   }
-  
+
   # Cálculos de custo do ambiente de produção e desenvolvimento
   prod_cost = lookup(local.db_instance_costs, var.instance_type, local.db_instance_costs["default"]) * var.node_count
-  dev_cost = lookup(local.db_instance_costs, var.instance_type, local.db_instance_costs["default"])
+  dev_cost  = lookup(local.db_instance_costs, var.instance_type, local.db_instance_costs["default"])
 }
 
 output "estimated_monthly_cost" {
@@ -91,18 +91,18 @@ output "estimated_monthly_cost" {
     instance_type = {
       size = var.instance_type
       cost_estimate = var.instance_type == "db-s-1vcpu-1gb" ? "15 USD/mês" : (
-                     var.instance_type == "db-s-1vcpu-2gb" ? "25 USD/mês" : (
-                     var.instance_type == "db-s-2vcpu-4gb" ? "60 USD/mês" : (
-                     var.instance_type == "db-s-4vcpu-8gb" ? "120 USD/mês" : (
-                     var.instance_type == "db-s-6vcpu-16gb" ? "235 USD/mês" : (
-                     var.instance_type == "db-s-8vcpu-32gb" ? "470 USD/mês" : "Verificar preços DigitalOcean")))))
+        var.instance_type == "db-s-1vcpu-2gb" ? "25 USD/mês" : (
+          var.instance_type == "db-s-2vcpu-4gb" ? "60 USD/mês" : (
+            var.instance_type == "db-s-4vcpu-8gb" ? "120 USD/mês" : (
+              var.instance_type == "db-s-6vcpu-16gb" ? "235 USD/mês" : (
+      var.instance_type == "db-s-8vcpu-32gb" ? "470 USD/mês" : "Verificar preços DigitalOcean")))))
     }
     node_count = {
-      count = var.environment == "prod" ? var.node_count : 1
+      count      = var.environment == "prod" ? var.node_count : 1
       total_cost = var.environment == "prod" ? "${local.prod_cost} USD/mês" : "${local.dev_cost} USD/mês"
     }
     storage = "Incluído no preço do plano"
-    backup = "Incluído no preço do plano (7 dias de backup)"
+    backup  = "Incluído no preço do plano (7 dias de backup)"
     savings_tips = [
       "Use o menor tamanho de instância que atenda às necessidades",
       "Evite clusters em produção para ambientes de desenvolvimento",

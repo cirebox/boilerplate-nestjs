@@ -172,10 +172,10 @@ variable "nat_rules" {
 variable "outbound_rules" {
   description = "Lista de regras de saída a serem criadas"
   type = list(object({
-    name                    = string
-    protocol                = string
+    name                     = string
+    protocol                 = string
     allocated_outbound_ports = optional(number, 1024)
-    idle_timeout_in_minutes = optional(number, 4)
+    idle_timeout_in_minutes  = optional(number, 4)
   }))
   default = []
 }

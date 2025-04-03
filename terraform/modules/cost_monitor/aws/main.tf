@@ -20,7 +20,7 @@ resource "aws_budgets_budget" "monthly" {
   limit_unit        = var.budget_currency
   time_unit         = "MONTHLY"
   time_period_start = formatdate("YYYY-MM-01_00:00", timestamp())
-  
+
   # Filtrar por tags específicas do projeto
   cost_filter {
     name = "TagKeyValue"
@@ -29,7 +29,7 @@ resource "aws_budgets_budget" "monthly" {
       "user:Environment$${var.environment}"
     ]
   }
-  
+
   # Notificação quando atingir 80% do orçamento
   notification {
     comparison_operator        = "GREATER_THAN"
@@ -39,7 +39,7 @@ resource "aws_budgets_budget" "monthly" {
     subscriber_email_addresses = var.alert_emails
     subscriber_sns_topic_arns  = []
   }
-  
+
   # Notificação quando atingir 100% do orçamento
   notification {
     comparison_operator        = "GREATER_THAN"
@@ -49,7 +49,7 @@ resource "aws_budgets_budget" "monthly" {
     subscriber_email_addresses = var.alert_emails
     subscriber_sns_topic_arns  = []
   }
-  
+
   # Notificação de previsão quando o gasto está projetado para ultrapassar o orçamento
   notification {
     comparison_operator        = "GREATER_THAN"
@@ -72,34 +72,34 @@ resource "aws_cur_report_definition" "cost_report" {
   s3_region                  = aws_s3_bucket.cost_reports.region
   s3_prefix                  = "cost-reports"
   report_versioning          = "OVERWRITE_REPORT"
-  
+
   depends_on = [aws_s3_bucket_policy.cost_reports]
 }
 
 # Bucket S3 para armazenar relatórios de custo
 resource "aws_s3_bucket" "cost_reports" {
   bucket = "${var.project_name}-${var.environment}-cost-reports-${local.account_id}"
-  
+
   tags = var.tags
 }
 
 # Configuração de ciclo de vida para economizar custos
 resource "aws_s3_bucket_lifecycle_configuration" "cost_reports_lifecycle" {
   bucket = aws_s3_bucket.cost_reports.id
-  
+
   rule {
     id     = "archive-old-reports"
     status = "Enabled"
-    
+
     filter {
       prefix = "cost-reports/"
     }
-    
+
     transition {
       days          = 90
       storage_class = "STANDARD_IA"
     }
-    
+
     expiration {
       days = 365
     }
@@ -113,26 +113,26 @@ resource "aws_s3_bucket_policy" "cost_reports" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCURPut"
-        Effect    = "Allow"
+        Sid    = "AllowCURPut"
+        Effect = "Allow"
         Principal = {
           Service = "billingreports.amazonaws.com"
         }
-        Action    = [
+        Action = [
           "s3:PutObject"
         ]
-        Resource  = "${aws_s3_bucket.cost_reports.arn}/*"
+        Resource = "${aws_s3_bucket.cost_reports.arn}/*"
       },
       {
-        Sid       = "AllowCURList"
-        Effect    = "Allow"
+        Sid    = "AllowCURList"
+        Effect = "Allow"
         Principal = {
           Service = "billingreports.amazonaws.com"
         }
-        Action    = [
+        Action = [
           "s3:ListBucket"
         ]
-        Resource  = aws_s3_bucket.cost_reports.arn
+        Resource = aws_s3_bucket.cost_reports.arn
       }
     ]
   })
@@ -140,25 +140,25 @@ resource "aws_s3_bucket_policy" "cost_reports" {
 
 # Habilitar o Cost Explorer se solicitado
 resource "aws_ce_cost_category" "environment" {
-  count         = var.enable_cost_explorer ? 1 : 0
-  name          = "${var.project_name}-environments"
-  rule_version  = "CostCategoryExpression.v1"
-  
+  count        = var.enable_cost_explorer ? 1 : 0
+  name         = "${var.project_name}-environments"
+  rule_version = "CostCategoryExpression.v1"
+
   rule {
     value = "Desenvolvimento"
-    
+
     rule {
       dimension {
-        key           = "LINKED_ACCOUNT_NAME"  # Usado um valor válido da lista suportada
+        key           = "LINKED_ACCOUNT_NAME" # Usado um valor válido da lista suportada
         values        = ["dev"]
         match_options = ["EQUALS"]
       }
     }
   }
-  
+
   rule {
     value = "Homologação"
-    
+
     rule {
       dimension {
         key           = "LINKED_ACCOUNT_NAME"
@@ -167,10 +167,10 @@ resource "aws_ce_cost_category" "environment" {
       }
     }
   }
-  
+
   rule {
     value = "Produção"
-    
+
     rule {
       dimension {
         key           = "LINKED_ACCOUNT_NAME"
@@ -179,7 +179,7 @@ resource "aws_ce_cost_category" "environment" {
       }
     }
   }
-  
+
   rule {
     value = "Outros"
     type  = "REGULAR"
@@ -197,18 +197,18 @@ resource "aws_cloudwatch_metric_alarm" "billing_alarm" {
   statistic           = "Maximum"
   threshold           = var.budget_amount * (var.alert_threshold_percent / 100)
   alarm_description   = "Este alarme é acionado quando os gastos estimados ultrapassam ${var.alert_threshold_percent}% do orçamento mensal (${var.budget_amount} ${var.budget_currency})"
-  
+
   dimensions = {
     Currency = var.budget_currency
   }
-  
+
   alarm_actions = [aws_sns_topic.billing_alerts.arn]
 }
 
 # Tópico SNS para notificações de gastos
 resource "aws_sns_topic" "billing_alerts" {
   name = "${var.project_name}-${var.environment}-billing-alerts"
-  
+
   tags = var.tags
 }
 

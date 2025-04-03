@@ -5,7 +5,7 @@
 locals {
   schedule_expression = var.rotation_schedule != "" ? var.rotation_schedule : "cron(0 0 1 * ? *)" # Padrão: 1º dia de cada mês
   function_name       = "${var.environment}-${var.project_name}-credential-rotation"
-  
+
   # Script Python que será executado pela função Lambda para rotacionar credenciais
   lambda_function_code = <<EOF
 import boto3
@@ -176,7 +176,7 @@ EOF
 resource "aws_secretsmanager_secret" "digitalocean_tokens" {
   name        = "${var.environment}-${var.project_name}-do-tokens"
   description = "Armazena os tokens da API Digital Ocean para o projeto ${var.project_name}"
-  
+
   tags = merge(var.tags, {
     Name        = "${var.environment}-${var.project_name}-do-tokens"
     Environment = var.environment
@@ -187,13 +187,13 @@ resource "aws_secretsmanager_secret" "digitalocean_tokens" {
 
 # Armazenar o token inicial no Secret Manager
 resource "aws_secretsmanager_secret_version" "initial_token" {
-  secret_id     = aws_secretsmanager_secret.digitalocean_tokens.id
+  secret_id = aws_secretsmanager_secret.digitalocean_tokens.id
   secret_string = jsonencode({
     digitalocean_token = var.initial_token,
     last_rotated       = timestamp(),
     created_by         = "terraform"
   })
-  
+
   lifecycle {
     # Evitar atualizações deste recurso após a criação inicial
     ignore_changes = [secret_string]
@@ -214,7 +214,7 @@ resource "aws_iam_role" "lambda_role" {
       }
     }]
   })
-  
+
   tags = merge(var.tags, {
     Name        = "${local.function_name}-role"
     Environment = var.environment
@@ -266,24 +266,24 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
 
 # Criar função Lambda para rotação de credenciais
 resource "aws_lambda_function" "credential_rotation" {
-  function_name    = local.function_name
-  role             = aws_iam_role.lambda_role.arn
-  handler          = "index.lambda_handler"
-  runtime          = "python3.9"
-  timeout          = 60
-  memory_size      = 128
-  
+  function_name = local.function_name
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.9"
+  timeout       = 60
+  memory_size   = 128
+
   # Código da função inline usando arquivo zip
   filename         = "${path.module}/lambda_function.zip"
   source_code_hash = data.archive_file.lambda_code.output_base64sha256
-  
+
   environment {
     variables = {
       SECRET_NAME   = aws_secretsmanager_secret.digitalocean_tokens.name
       SNS_TOPIC_ARN = var.sns_topic_arn
     }
   }
-  
+
   tags = merge(var.tags, {
     Name        = local.function_name
     Environment = var.environment
@@ -296,7 +296,7 @@ resource "aws_lambda_function" "credential_rotation" {
 data "archive_file" "lambda_code" {
   type        = "zip"
   output_path = "${path.module}/lambda_function.zip"
-  
+
   source {
     content  = <<EOF
 ${local.lambda_function_code}
@@ -310,7 +310,7 @@ resource "aws_cloudwatch_event_rule" "rotation_schedule" {
   name                = "${local.function_name}-schedule"
   description         = "Agenda para rotação automática de credenciais"
   schedule_expression = local.schedule_expression
-  
+
   tags = merge(var.tags, {
     Name        = "${local.function_name}-schedule"
     Environment = var.environment
@@ -345,14 +345,14 @@ resource "aws_cloudwatch_metric_alarm" "rotation_errors" {
   statistic           = "Sum"
   threshold           = 0
   alarm_description   = "Monitora erros na função de rotação de credenciais"
-  
+
   dimensions = {
     FunctionName = aws_lambda_function.credential_rotation.function_name
   }
-  
+
   alarm_actions = var.sns_topic_arn != "" ? [var.sns_topic_arn] : []
   ok_actions    = var.sns_topic_arn != "" ? [var.sns_topic_arn] : []
-  
+
   tags = merge(var.tags, {
     Name        = "${local.function_name}-error-alarm"
     Environment = var.environment
@@ -366,11 +366,11 @@ resource "aws_ssm_parameter" "last_rotation" {
   description = "Registro da última rotação de credenciais"
   type        = "String"
   value       = timestamp()
-  
+
   lifecycle {
     ignore_changes = [value]
   }
-  
+
   tags = merge(var.tags, {
     Name        = "${var.environment}-${var.project_name}-last-rotation"
     Environment = var.environment

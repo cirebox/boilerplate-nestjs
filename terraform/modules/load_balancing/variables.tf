@@ -25,7 +25,7 @@ variable "tags" {
 variable "provider_name" {
   description = "Provedor de nuvem a ser utilizado (aws, gcp, azure, digitalocean)"
   type        = string
-  
+
   validation {
     condition     = contains(["aws", "gcp", "azure", "digitalocean"], var.provider_name)
     error_message = "Provedor inválido. Os valores permitidos são: aws, gcp, azure, digitalocean."
@@ -77,7 +77,7 @@ variable "health_check_protocol" {
   description = "Protocolo para verificação de saúde (http ou https)"
   type        = string
   default     = "http"
-  
+
   validation {
     condition     = contains(["http", "https"], var.health_check_protocol)
     error_message = "Protocolo inválido. Os valores permitidos são: http, https."
@@ -137,7 +137,7 @@ variable "aws_lb_type" {
   description = "Tipo de load balancer na AWS (application, network, gateway)"
   type        = string
   default     = "application"
-  
+
   validation {
     condition     = contains(["application", "network", "gateway"], var.aws_lb_type)
     error_message = "Tipo de load balancer inválido. Os valores permitidos são: application, network, gateway."
@@ -197,7 +197,7 @@ variable "gcp_backend_service_protocol" {
   description = "Protocolo do serviço de backend no GCP (HTTP, HTTPS, HTTP2, TCP, SSL)"
   type        = string
   default     = "HTTP"
-  
+
   validation {
     condition     = contains(["HTTP", "HTTPS", "HTTP2", "TCP", "SSL"], var.gcp_backend_service_protocol)
     error_message = "Protocolo inválido. Os valores permitidos são: HTTP, HTTPS, HTTP2, TCP, SSL."
@@ -239,7 +239,7 @@ variable "azure_private_ip_address_allocation" {
   description = "Método de alocação de IP privado no Azure (Static, Dynamic)"
   type        = string
   default     = "Dynamic"
-  
+
   validation {
     condition     = contains(["Static", "Dynamic"], var.azure_private_ip_address_allocation)
     error_message = "Método de alocação inválido. Os valores permitidos são: Static, Dynamic."
@@ -250,7 +250,7 @@ variable "azure_lb_sku" {
   description = "SKU do load balancer no Azure (Basic, Standard)"
   type        = string
   default     = "Standard"
-  
+
   validation {
     condition     = contains(["Basic", "Standard"], var.azure_lb_sku)
     error_message = "SKU inválido. Os valores permitidos são: Basic, Standard."
@@ -291,14 +291,14 @@ variable "do_droplet_ids" {
 variable "do_sticky_sessions" {
   description = "Configuração de sessões persistentes para o DigitalOcean"
   type = object({
-    enabled               = bool
-    cookie_name           = string
-    cookie_ttl_seconds    = number
+    enabled            = bool
+    cookie_name        = string
+    cookie_ttl_seconds = number
   })
   default = {
-    enabled               = false
-    cookie_name           = "lb_session"
-    cookie_ttl_seconds    = 3600
+    enabled            = false
+    cookie_name        = "lb_session"
+    cookie_ttl_seconds = 3600
   }
 }
 
@@ -330,7 +330,7 @@ variable "do_algorithm" {
   description = "Algoritmo de balanceamento de carga no DigitalOcean (round_robin, least_connections)"
   type        = string
   default     = "round_robin"
-  
+
   validation {
     condition     = contains(["round_robin", "least_connections"], var.do_algorithm)
     error_message = "Algoritmo inválido. Os valores permitidos são: round_robin, least_connections."

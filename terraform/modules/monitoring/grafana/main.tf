@@ -43,8 +43,8 @@ variable "prometheus_url" {
 variable "alert_notification_channels" {
   description = "Canais de notificação de alertas (email, slack, etc)"
   type = list(object({
-    name  = string
-    type  = string
+    name     = string
+    type     = string
     settings = map(string)
   }))
   default = []
@@ -53,7 +53,7 @@ variable "alert_notification_channels" {
 # Cria namespace se não existir
 resource "kubernetes_namespace" "monitoring" {
   count = var.kubernetes_namespace == "monitoring" ? 1 : 0
-  
+
   metadata {
     name = var.kubernetes_namespace
     labels = {
@@ -151,10 +151,10 @@ resource "helm_release" "grafana" {
   # Arquivo de valores para configurações mais complexas
   values = [
     templatefile("${path.module}/templates/grafana-values.yaml", {
-      prometheus_url  = var.prometheus_url
-      retention_days  = var.retention_days
-      project_name    = var.project_name
-      environment     = var.environment
+      prometheus_url = var.prometheus_url
+      retention_days = var.retention_days
+      project_name   = var.project_name
+      environment    = var.environment
     })
   ]
 }

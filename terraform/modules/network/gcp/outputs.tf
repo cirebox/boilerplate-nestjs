@@ -58,15 +58,15 @@ output "estimated_monthly_cost" {
   value = {
     vpc = "Gratuito (não há custos para manter VPCs no GCP)"
     nat = var.create_nat_gateway ? {
-      gateway_hours = "$0.0375/hora = ~$27/mês"
+      gateway_hours  = "$0.0375/hora = ~$27/mês"
       data_processed = "Depende do uso: $0.045/GB processado"
-      ip_address = "$0.004/hora = ~$3/mês por IP"
-    } : {
-      gateway_hours = "$0/mês"
+      ip_address     = "$0.004/hora = ~$3/mês por IP"
+      } : {
+      gateway_hours  = "$0/mês"
       data_processed = "$0/mês"
-      ip_address = "$0/mês"
+      ip_address     = "$0/mês"
     }
     network_egress = "Depende do tráfego: $0.085-$0.23/GB (varia por região)"
-    logs = var.environment == "prod" ? "Alta amostragem, custos maiores" : "Baixa amostragem para economia"
+    logs           = var.environment == "prod" ? "Alta amostragem, custos maiores" : "Baixa amostragem para economia"
   }
 }

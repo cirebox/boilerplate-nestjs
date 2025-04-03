@@ -9,12 +9,12 @@ resource "aws_secretsmanager_secret" "webhook_urls" {
   name                    = "${var.project_name}-${var.environment}-webhook-urls"
   description             = "URLs de webhooks para alertas e notificações"
   recovery_window_in_days = var.environment == "prod" ? 30 : 7
-  
+
   tags = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "webhook_urls" {
-  secret_id     = aws_secretsmanager_secret.webhook_urls.id
+  secret_id = aws_secretsmanager_secret.webhook_urls.id
   secret_string = jsonencode({
     slack_alerts_webhook = var.slack_webhook_url
     teams_webhook        = var.ms_teams_webhook_url
@@ -28,12 +28,12 @@ resource "aws_secretsmanager_secret" "api_credentials" {
   name                    = "${var.project_name}-${var.environment}-api-credentials"
   description             = "Credenciais de API para serviços externos"
   recovery_window_in_days = var.environment == "prod" ? 30 : 7
-  
+
   tags = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "api_credentials" {
-  secret_id     = aws_secretsmanager_secret.api_credentials.id
+  secret_id = aws_secretsmanager_secret.api_credentials.id
   secret_string = jsonencode({
     external_api_key     = var.external_api_key
     monitoring_api_token = var.monitoring_api_token

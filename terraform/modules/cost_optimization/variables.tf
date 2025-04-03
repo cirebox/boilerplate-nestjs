@@ -26,19 +26,19 @@ variable "recursos_para_desligar" {
 variable "horario_comercial_inicio" {
   description = "Hora de início do horário comercial (formato 24h, UTC)"
   type        = number
-  default     = 8  # 8:00 AM
+  default     = 8 # 8:00 AM
 }
 
 variable "horario_comercial_fim" {
   description = "Hora de término do horário comercial (formato 24h, UTC)"
   type        = number
-  default     = 18  # 6:00 PM
+  default     = 18 # 6:00 PM
 }
 
 variable "dias_ativos" {
   description = "Dias da semana em que os recursos devem estar ativos (1 = Segunda-feira, 7 = Domingo)"
   type        = list(number)
-  default     = [1, 2, 3, 4, 5]  # Segunda a sexta-feira
+  default     = [1, 2, 3, 4, 5] # Segunda a sexta-feira
 }
 
 variable "timezone" {

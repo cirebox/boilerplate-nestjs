@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0.0"
-    
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -10,6 +10,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 4.0"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 4.0"
+    }
     digitalocean = {
       source  = "digitalocean/digitalocean"
       version = "~> 2.36"
@@ -17,10 +21,6 @@ terraform {
     docker = {
       source  = "kreuzwerker/docker"
       version = "~> 3.0"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
@@ -34,10 +34,13 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
   }
-}
-
-# Output para teste
-output "validation_message" {
-  value = "A configuração do Terraform está válida e pronta para uso."
 }

@@ -12,48 +12,48 @@
 locals {
   outputs = {
     aws = {
-      load_balancer_id        = module.aws[0].load_balancer_id
-      load_balancer_arn       = module.aws[0].load_balancer_arn
-      load_balancer_dns_name  = module.aws[0].load_balancer_dns_name
-      load_balancer_zone_id   = module.aws[0].load_balancer_zone_id
-      load_balancer_ip        = null # AWS utiliza DNS em vez de IP fixo
-      http_listener_arn       = module.aws[0].http_listener_arn
-      https_listener_arn      = module.aws[0].https_listener_arn
-      target_group_arn        = module.aws[0].target_group_arn
-      security_group_id       = module.aws[0].security_group_id
+      load_balancer_id       = module.aws[0].load_balancer_id
+      load_balancer_arn      = module.aws[0].load_balancer_arn
+      load_balancer_dns_name = module.aws[0].load_balancer_dns_name
+      load_balancer_zone_id  = module.aws[0].load_balancer_zone_id
+      load_balancer_ip       = null # AWS utiliza DNS em vez de IP fixo
+      http_listener_arn      = module.aws[0].http_listener_arn
+      https_listener_arn     = module.aws[0].https_listener_arn
+      target_group_arn       = module.aws[0].target_group_arn
+      security_group_id      = module.aws[0].security_group_id
     }
     digital-ocean = {
-      load_balancer_id        = module.digital-ocean[0].load_balancer_id
-      load_balancer_arn       = null # DO não possui ARN
-      load_balancer_dns_name  = module.digital-ocean[0].load_balancer_hostname
-      load_balancer_zone_id   = null # DO não possui zone_id
-      load_balancer_ip        = module.digital-ocean[0].load_balancer_ip
-      http_listener_arn       = null # DO não possui ARNs separados para listeners
-      https_listener_arn      = null
-      target_group_arn        = null # DO não possui target groups separados
-      security_group_id       = null # DO usa regras de firewall separadamente
+      load_balancer_id       = module.digital-ocean[0].load_balancer_id
+      load_balancer_arn      = null # DO não possui ARN
+      load_balancer_dns_name = module.digital-ocean[0].load_balancer_hostname
+      load_balancer_zone_id  = null # DO não possui zone_id
+      load_balancer_ip       = module.digital-ocean[0].load_balancer_ip
+      http_listener_arn      = null # DO não possui ARNs separados para listeners
+      https_listener_arn     = null
+      target_group_arn       = null # DO não possui target groups separados
+      security_group_id      = null # DO usa regras de firewall separadamente
     }
     gcp = {
-      load_balancer_id        = module.gcp[0].load_balancer_id
-      load_balancer_arn       = null # GCP não possui ARN
-      load_balancer_dns_name  = module.gcp[0].load_balancer_dns_name
-      load_balancer_zone_id   = null # GCP não possui zone_id no mesmo formato da AWS
-      load_balancer_ip        = module.gcp[0].load_balancer_ip
-      http_listener_arn       = null # GCP não possui ARNs
-      https_listener_arn      = null
-      target_group_arn        = null # GCP usa backend services
-      security_group_id       = null # GCP usa regras de firewall separadamente
+      load_balancer_id       = module.gcp[0].load_balancer_id
+      load_balancer_arn      = null # GCP não possui ARN
+      load_balancer_dns_name = module.gcp[0].load_balancer_dns_name
+      load_balancer_zone_id  = null # GCP não possui zone_id no mesmo formato da AWS
+      load_balancer_ip       = module.gcp[0].load_balancer_ip
+      http_listener_arn      = null # GCP não possui ARNs
+      https_listener_arn     = null
+      target_group_arn       = null # GCP usa backend services
+      security_group_id      = null # GCP usa regras de firewall separadamente
     }
     azure = {
-      load_balancer_id        = module.azure[0].load_balancer_id
-      load_balancer_arn       = null # Azure não possui ARN
-      load_balancer_dns_name  = module.azure[0].load_balancer_dns_name
-      load_balancer_zone_id   = null # Azure não possui zone_id no mesmo formato da AWS
-      load_balancer_ip        = module.azure[0].load_balancer_ip
-      http_listener_arn       = null # Azure não possui ARNs
-      https_listener_arn      = null
-      target_group_arn        = null # Azure usa backend pools
-      security_group_id       = module.azure[0].network_security_group_id
+      load_balancer_id       = module.azure[0].load_balancer_id
+      load_balancer_arn      = null # Azure não possui ARN
+      load_balancer_dns_name = module.azure[0].load_balancer_dns_name
+      load_balancer_zone_id  = null # Azure não possui zone_id no mesmo formato da AWS
+      load_balancer_ip       = module.azure[0].load_balancer_ip
+      http_listener_arn      = null # Azure não possui ARNs
+      https_listener_arn     = null
+      target_group_arn       = null # Azure usa backend pools
+      security_group_id      = module.azure[0].network_security_group_id
     }
   }
 }

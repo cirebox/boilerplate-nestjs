@@ -5,14 +5,8 @@
  * com suporte a múltiplos backends, health checks e configurações de segurança.
  */
 
-terraform {
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 4.0.0"
-    }
-  }
-}
+# O bloco terraform com required_providers foi removido, pois agora as versões dos providers
+# são gerenciadas centralmente no arquivo versions.tf na raiz do diretório terraform
 
 # Reservar um endereço IP externo para o load balancer
 resource "google_compute_global_address" "main" {
@@ -49,7 +43,7 @@ resource "google_compute_backend_service" "main" {
   health_checks         = [google_compute_health_check.main.id]
   load_balancing_scheme = "EXTERNAL"
   enable_cdn            = var.enable_cdn
-  
+
   # Se o recurso de backend já estiver definido, use-o, caso contrário, crie um
   dynamic "backend" {
     for_each = var.backends
@@ -98,7 +92,7 @@ resource "google_compute_url_map" "main" {
     content {
       name            = path_matcher.value["name"]
       default_service = path_matcher.value["default_service"] != null ? path_matcher.value["default_service"] : google_compute_backend_service.main.id
-      
+
       dynamic "path_rule" {
         for_each = lookup(path_matcher.value, "path_rules", [])
         content {
@@ -131,23 +125,23 @@ resource "google_compute_target_https_proxy" "main" {
 
 # Regra de encaminhamento para HTTP
 resource "google_compute_global_forwarding_rule" "http" {
-  count       = var.enable_http ? 1 : 0
-  name        = "${var.name}-http-rule"
-  description = "Regra de encaminhamento HTTP para ${var.name}"
-  target      = google_compute_target_http_proxy.main[0].id
-  ip_address  = google_compute_global_address.main.address
-  port_range  = "80"
+  count                 = var.enable_http ? 1 : 0
+  name                  = "${var.name}-http-rule"
+  description           = "Regra de encaminhamento HTTP para ${var.name}"
+  target                = google_compute_target_http_proxy.main[0].id
+  ip_address            = google_compute_global_address.main.address
+  port_range            = "80"
   load_balancing_scheme = "EXTERNAL"
 }
 
 # Regra de encaminhamento para HTTPS
 resource "google_compute_global_forwarding_rule" "https" {
-  count       = var.enable_https ? 1 : 0
-  name        = "${var.name}-https-rule"
-  description = "Regra de encaminhamento HTTPS para ${var.name}"
-  target      = google_compute_target_https_proxy.main[0].id
-  ip_address  = google_compute_global_address.main.address
-  port_range  = "443"
+  count                 = var.enable_https ? 1 : 0
+  name                  = "${var.name}-https-rule"
+  description           = "Regra de encaminhamento HTTPS para ${var.name}"
+  target                = google_compute_target_https_proxy.main[0].id
+  ip_address            = google_compute_global_address.main.address
+  port_range            = "443"
   load_balancing_scheme = "EXTERNAL"
 }
 

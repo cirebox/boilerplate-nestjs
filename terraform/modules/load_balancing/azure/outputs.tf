@@ -4,100 +4,58 @@
  */
 
 output "load_balancer_id" {
-  description = "ID do Load Balancer criado no Azure"
+  description = "ID do Azure Load Balancer"
   value       = azurerm_lb.main.id
 }
 
-output "load_balancer_name" {
-  description = "Nome do Azure Load Balancer"
-  value       = azurerm_lb.main.name
-}
-
 output "load_balancer_ip" {
-  description = "Endereço IP público do Load Balancer"
+  description = "Endereço IP público do load balancer"
   value       = azurerm_public_ip.main.ip_address
 }
 
-output "load_balancer_dns" {
-  description = "Nome DNS completo do Load Balancer"
+output "load_balancer_fqdn" {
+  description = "FQDN do load balancer, se disponível"
   value       = azurerm_public_ip.main.fqdn
 }
 
-output "frontend_ip_configuration_name" {
-  description = "Nome da configuração de IP frontend do Load Balancer"
-  value       = azurerm_lb.main.frontend_ip_configuration[0].name
+output "load_balancer_dns_name" {
+  description = "Nome DNS do load balancer"
+  value       = azurerm_public_ip.main.fqdn != "" ? azurerm_public_ip.main.fqdn : "não aplicável - IP privado"
 }
 
-output "backend_address_pool_id" {
-  description = "ID do pool de endereços backend do Load Balancer"
+output "backend_pool_id" {
+  description = "ID do backend pool"
   value       = azurerm_lb_backend_address_pool.main.id
 }
 
-output "backend_pool_name" {
-  description = "Nome do backend pool configurado"
-  value       = azurerm_lb_backend_address_pool.main.name
-}
-
-output "http_rule_name" {
-  description = "Nome da regra HTTP do Load Balancer"
-  value       = var.enable_http ? azurerm_lb_rule.http[0].name : null
-}
-
-output "https_rule_name" {
-  description = "Nome da regra HTTPS do Load Balancer"
-  value       = var.enable_https ? azurerm_lb_rule.https[0].name : null
-}
-
-output "http_listener_id" {
-  description = "ID do listener HTTP configurado no balanceador"
-  value       = var.enable_http ? azurerm_lb_rule.http[0].id : null
-}
-
-output "https_listener_id" {
-  description = "ID do listener HTTPS configurado no balanceador (se habilitado)"
-  value       = var.enable_https ? azurerm_lb_rule.https[0].id : null
-}
-
 output "health_probe_id" {
-  description = "ID do health probe do Load Balancer"
-  value       = azurerm_lb_probe.main.id
+  description = "ID da sonda de saúde (health probe)"
+  value       = azurerm_lb_probe.http.id
 }
 
-output "nat_rules" {
-  description = "IDs das regras NAT configuradas, se existirem"
-  value       = [for rule in azurerm_lb_nat_rule.rules : rule.id]
+output "frontend_ip_configuration_id" {
+  description = "ID da configuração de IP frontend"
+  value       = azurerm_lb.main.frontend_ip_configuration[0].id
 }
 
-output "resource_group_name" {
-  description = "Nome do grupo de recursos onde o Load Balancer foi criado"
-  value       = var.resource_group_name
+output "network_security_rules" {
+  description = "Regras de segurança de rede associadas, se aplicável"
+  value       = try(azurerm_network_security_rule.lb_rules[*].name, [])
 }
 
-output "location" {
-  description = "Região do Azure onde o Load Balancer foi criado"
-  value       = var.location
+output "https_enabled" {
+  description = "Indica se HTTPS está habilitado"
+  value       = var.enable_https
 }
 
-output "tags" {
-  description = "Tags aplicadas ao Load Balancer"
-  value       = azurerm_lb.main.tags
+output "application_gateway_id" {
+  description = "ID do Application Gateway (se HTTPS estiver habilitado)"
+  value       = var.enable_https ? try(azurerm_application_gateway.main[0].id, null) : null
 }
 
-output "load_balancer_rules" {
-  description = "Lista de regras configuradas no load balancer"
-  value       = concat(
-    var.enable_http ? [azurerm_lb_rule.http[0].name] : [],
-    var.enable_https ? [azurerm_lb_rule.https[0].name] : []
-  )
-}
-
-output "diagnostic_settings" {
-  description = "Configurações de diagnóstico do Load Balancer"
-  value       = var.enable_diagnostics ? azurerm_monitor_diagnostic_setting.main[0].id : null
-}
-
-output "waf_policy_id" {
-  description = "ID da política de Web Application Firewall associada ao Load Balancer (se habilitada)"
-  value       = var.enable_waf ? azurerm_web_application_firewall_policy.main[0].id : null
+output "ssl_certificate_name" {
+  description = "Nome do certificado SSL, se configurado"
+  value       = var.enable_https ? var.ssl_certificate_name : null
+  sensitive   = true
 }
 

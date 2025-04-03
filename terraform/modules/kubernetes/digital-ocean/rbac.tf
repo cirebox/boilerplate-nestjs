@@ -5,20 +5,20 @@
 variable "rbac_groups" {
   description = "Mapa de nomes de grupos e usuários para cada tipo de acesso"
   type = map(object({
-    users = list(string)
+    users  = list(string)
     groups = list(string)
   }))
   default = {
     admin = {
-      users = []
+      users  = []
       groups = []
     }
     develop = {
-      users = []
+      users  = []
       groups = []
     }
     readonly = {
-      users = []
+      users  = []
       groups = []
     }
   }
@@ -26,8 +26,8 @@ variable "rbac_groups" {
 
 variable "rbac_namespaces" {
   description = "Lista de namespaces para aplicar as roles (deixe vazio para usar ClusterRoles)"
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 # Configuração para utilizar o provedor kubernetes após a criação do cluster

@@ -8,7 +8,7 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
+
   # Configuração do backend remoto
   backend "s3" {
     bucket         = "terraform-state-boilerplate-nestjs"
@@ -21,8 +21,8 @@ terraform {
 
 # Carrega as configurações do arquivo config.yaml
 locals {
-  config = yamldecode(file("${path.module}/config.yaml"))
-  environment = "staging"
+  config       = yamldecode(file("${path.module}/config.yaml"))
+  environment  = "staging"
   project_name = "boilerplate-nestjs"
   tags = {
     Environment = local.environment
@@ -35,7 +35,7 @@ locals {
 provider "aws" {
   region  = local.config.provider.aws.region
   profile = local.config.provider.aws.profile
-  
+
   default_tags {
     tags = local.tags
   }
@@ -44,84 +44,84 @@ provider "aws" {
 # Módulo de rede
 module "network" {
   source = "../../modules/network/aws"
-  
-  environment = local.environment
+
+  environment  = local.environment
   project_name = local.project_name
-  vpc_cidr = local.config.network.vpc_cidr
-  tags = local.tags
+  vpc_cidr     = local.config.network.vpc_cidr
+  tags         = local.tags
 }
 
 # Módulo de banco de dados
 module "database" {
   source = "../../modules/database/aws"
-  
-  environment = local.environment
-  project_name = local.project_name
-  instance_type = local.config.database.instance_type
+
+  environment    = local.environment
+  project_name   = local.project_name
+  instance_type  = local.config.database.instance_type
   engine_version = local.config.database.engine_version
-  subnet_ids = module.network.private_subnet_ids
-  vpc_id = module.network.vpc_id
-  tags = local.tags
-  
+  subnet_ids     = module.network.private_subnet_ids
+  vpc_id         = module.network.vpc_id
+  tags           = local.tags
+
   # Configurações de controle de custos
   backup_retention_days = local.config.database.backup_retention_days
-  skip_final_snapshot = local.config.database.skip_final_snapshot
-  deletion_protection = local.config.database.deletion_protection
-  
+  skip_final_snapshot   = local.config.database.skip_final_snapshot
+  deletion_protection   = local.config.database.deletion_protection
+
   # Configurações de escalabilidade
-  allocated_storage = local.config.database.storage_gb
+  allocated_storage     = local.config.database.storage_gb
   max_allocated_storage = local.config.database.max_allocated_storage
-  
+
   depends_on = [module.network]
 }
 
 # Módulo de Kubernetes
 module "kubernetes" {
   source = "../../modules/kubernetes/aws"
-  
-  environment = local.environment
-  project_name = local.project_name
-  cluster_version = local.config.kubernetes.version
+
+  environment         = local.environment
+  project_name        = local.project_name
+  cluster_version     = local.config.kubernetes.version
   node_instance_types = local.config.kubernetes.node_instance_types
-  min_nodes = local.config.kubernetes.min_nodes
-  max_nodes = local.config.kubernetes.max_nodes
-  desired_nodes = local.config.kubernetes.desired_nodes
-  vpc_id = module.network.vpc_id
-  subnet_ids = module.network.private_subnet_ids
-  tags = local.tags
-  
+  min_nodes           = local.config.kubernetes.min_nodes
+  max_nodes           = local.config.kubernetes.max_nodes
+  desired_nodes       = local.config.kubernetes.desired_nodes
+  vpc_id              = module.network.vpc_id
+  subnet_ids          = module.network.private_subnet_ids
+  tags                = local.tags
+
   depends_on = [module.network]
 }
 
 # Módulo de monitoramento de custos
 module "cost_monitor" {
   source = "../../modules/cost_monitor/aws"
-  
-  environment = local.environment
-  project_name = local.project_name
-  budget_amount = local.config.cost.budget_amount
-  budget_currency = local.config.cost.budget_currency
+
+  environment             = local.environment
+  project_name            = local.project_name
+  budget_amount           = local.config.cost.budget_amount
+  budget_currency         = local.config.cost.budget_currency
   alert_threshold_percent = local.config.cost.alert_threshold_percent
-  alert_emails = local.config.cost.alert_emails
-  tags = local.tags
+  alert_emails            = local.config.cost.alert_emails
+  tags                    = local.tags
 }
 
 # Módulo de monitoramento
 module "monitoring" {
   source = "../../modules/monitoring/aws"
-  
-  environment = local.environment
-  project_name = local.project_name
-  cpu_threshold = local.config.monitoring.alert_threshold_cpu
-  memory_threshold = local.config.monitoring.alert_threshold_memory
+
+  environment         = local.environment
+  project_name        = local.project_name
+  cpu_threshold       = local.config.monitoring.alert_threshold_cpu
+  memory_threshold    = local.config.monitoring.alert_threshold_memory
   notification_emails = local.config.cost.alert_emails
-  service_name = lookup(lookup(local.config.monitoring, "aws", {}), "service_name", "${local.project_name}-${local.environment}-service")
-  cluster_name = lookup(lookup(local.config.monitoring, "aws", {}), "cluster_name", "${local.project_name}-${local.environment}-cluster")
-  webhook_url = lookup(lookup(local.config.monitoring, "aws", {}), "webhook_url", "")
-  kubernetes_service = lookup(lookup(local.config.monitoring, "aws", {}), "kubernetes_service", false)
-  namespace = lookup(local.config.monitoring, "namespace", "staging")
-  tags = local.tags
-  
+  service_name        = lookup(lookup(local.config.monitoring, "aws", {}), "service_name", "${local.project_name}-${local.environment}-service")
+  cluster_name        = lookup(lookup(local.config.monitoring, "aws", {}), "cluster_name", "${local.project_name}-${local.environment}-cluster")
+  webhook_url         = lookup(lookup(local.config.monitoring, "aws", {}), "webhook_url", "")
+  kubernetes_service  = lookup(lookup(local.config.monitoring, "aws", {}), "kubernetes_service", false)
+  namespace           = lookup(local.config.monitoring, "namespace", "staging")
+  tags                = local.tags
+
   depends_on = [module.kubernetes]
 }
 

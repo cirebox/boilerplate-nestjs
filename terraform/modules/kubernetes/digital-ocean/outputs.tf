@@ -62,23 +62,23 @@ output "registry_secret_name" {
 # Cálculos de custo usando locals em vez de funções
 locals {
   doks_node_costs = {
-    "s-1vcpu-2gb" = 12
-    "s-2vcpu-2gb" = 18
-    "s-2vcpu-4gb" = 24
-    "s-4vcpu-8gb" = 48
+    "s-1vcpu-2gb"  = 12
+    "s-2vcpu-2gb"  = 18
+    "s-2vcpu-4gb"  = 24
+    "s-4vcpu-8gb"  = 48
     "s-8vcpu-16gb" = 96
-    "default" = 18
+    "default"      = 18
   }
-  
+
   # Cálculo de custo do node pool padrão
   default_node_cost = lookup(local.doks_node_costs, var.node_size, local.doks_node_costs["default"]) * var.node_count
-  
+
   # Cálculo de custo do node pool crítico
   critical_node_cost = (var.environment == "prod" && var.create_critical_pool) ? (lookup(local.doks_node_costs, var.critical_node_size, local.doks_node_costs["default"]) * var.critical_node_count) : 0
-    
+
   # Custo de alta disponibilidade
   ha_cost = var.environment == "prod" ? 60 : 0
-  
+
   # Custo total
   total_cost = local.default_node_cost + local.critical_node_cost + local.ha_cost
 }
@@ -87,24 +87,24 @@ output "estimated_monthly_cost" {
   description = "Estimativa de custos mensais do cluster Kubernetes"
   value = {
     node_pool_default = {
-      size = var.node_size
+      size  = var.node_size
       count = var.node_count
       cost_per_node = var.node_size == "s-1vcpu-2gb" ? "12 USD/mês" : (
-                      var.node_size == "s-2vcpu-2gb" ? "18 USD/mês" : (
-                      var.node_size == "s-2vcpu-4gb" ? "24 USD/mês" : (
-                      var.node_size == "s-4vcpu-8gb" ? "48 USD/mês" : "Verificar preços DigitalOcean")))
+        var.node_size == "s-2vcpu-2gb" ? "18 USD/mês" : (
+          var.node_size == "s-2vcpu-4gb" ? "24 USD/mês" : (
+      var.node_size == "s-4vcpu-8gb" ? "48 USD/mês" : "Verificar preços DigitalOcean")))
       monthly_estimate = "${local.default_node_cost} USD/mês"
     },
     node_pool_critical = var.environment == "prod" && var.create_critical_pool ? {
-      size = var.critical_node_size
+      size  = var.critical_node_size
       count = var.critical_node_count
       cost_per_node = var.critical_node_size == "s-2vcpu-4gb" ? "24 USD/mês" : (
-                      var.critical_node_size == "s-4vcpu-8gb" ? "48 USD/mês" : (
-                      var.critical_node_size == "s-8vcpu-16gb" ? "96 USD/mês" : "Verificar preços DigitalOcean"))
+        var.critical_node_size == "s-4vcpu-8gb" ? "48 USD/mês" : (
+      var.critical_node_size == "s-8vcpu-16gb" ? "96 USD/mês" : "Verificar preços DigitalOcean"))
       monthly_estimate = "${local.critical_node_cost} USD/mês"
     } : null,
     high_availability = {
-      enabled = var.environment == "prod"
+      enabled         = var.environment == "prod"
       additional_cost = var.environment == "prod" ? "60 USD/mês" : "0 USD/mês"
     },
     total_estimate = "${local.total_cost} USD/mês"

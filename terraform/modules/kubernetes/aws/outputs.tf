@@ -40,24 +40,24 @@ output "autoscaler_role_arn" {
 
 output "estimated_monthly_cost" {
   description = "Estimativa de custos mensais com base nas configurações atuais"
-  value       = {
+  value = {
     control_plane = {
-      cost = "73-146 USD/mês (depende da região)"
+      cost    = "73-146 USD/mês (depende da região)"
       details = "O plano de controle do EKS tem um custo fixo, independentemente do tamanho do cluster"
     }
     worker_nodes = {
       count = var.desired_nodes
       types = var.node_instance_types
       cost_estimate = var.node_instance_types[0] == "t3.small" ? "20-30 USD/mês por nó" : (
-                     var.node_instance_types[0] == "t3.medium" ? "40-50 USD/mês por nó" : 
-                     "Verificar calculadora AWS")
+        var.node_instance_types[0] == "t3.medium" ? "40-50 USD/mês por nó" :
+      "Verificar calculadora AWS")
       total_estimate = "${var.desired_nodes * (
-                         var.node_instance_types[0] == "t3.small" ? 25 : (
-                         var.node_instance_types[0] == "t3.medium" ? 45 : 
-                         75))}-${var.desired_nodes * (
-                         var.node_instance_types[0] == "t3.small" ? 30 : (
-                         var.node_instance_types[0] == "t3.medium" ? 50 : 
-                         100))} USD/mês (total estimado)"
+        var.node_instance_types[0] == "t3.small" ? 25 : (
+          var.node_instance_types[0] == "t3.medium" ? 45 :
+        75))}-${var.desired_nodes * (
+        var.node_instance_types[0] == "t3.small" ? 30 : (
+          var.node_instance_types[0] == "t3.medium" ? 50 :
+      100))} USD/mês (total estimado)"
       savings = var.environment != "prod" ? "Economia com uso de instâncias spot: até 70%" : "Instâncias On-Demand para maior confiabilidade"
     }
     networking = {

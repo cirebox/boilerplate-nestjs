@@ -74,7 +74,7 @@ module "app" {
   app_name        = "api-service"
   environment     = "production"
   container_image = "registry.example.com/api-service:latest"
-  
+
   # Sem configurações de balanceamento de carga aqui
   # Elas foram movidas para o módulo de load balancing abaixo
 }
@@ -85,18 +85,18 @@ module "load_balancer" {
 
   # Configuração de qual provedor usar (via variável)
   provider_type = local.cloud_provider
-  
+
   # Configurações comuns para todos os provedores
-  name           = "api-service-lb"
-  environment    = "production"
-  
+  name        = "api-service-lb"
+  environment = "production"
+
   # Configuração de protocolo e portas
   protocols = {
     http  = true
     https = true
   }
   redirect_http_to_https = true
-  
+
   # Configuração de regras de encaminhamento
   forwarding_rules = [
     {
@@ -112,7 +112,7 @@ module "load_balancer" {
       target_protocol = "http"
     }
   ]
-  
+
   # Verificação de saúde
   health_check = {
     port     = 80
@@ -122,34 +122,34 @@ module "load_balancer" {
     timeout  = 5
     retries  = 3
   }
-  
+
   # Configurações específicas para cada provedor são tratadas internamente
   # pelo módulo abstrato, baseadas no provider_type
-  
+
   # Configurações específicas do Digital Ocean
   do_config = {
     region         = "nyc1"
     droplet_ids    = module.kubernetes.node_ids
     certificate_id = var.certificate_id
   }
-  
+
   # Configurações específicas da AWS
   aws_config = {
-    vpc_id            = "vpc-12345678"
-    subnet_ids        = ["subnet-12345678", "subnet-87654321"]
-    certificate_arn   = "arn:aws:acm:region:account:certificate/certificate-id"
+    vpc_id             = "vpc-12345678"
+    subnet_ids         = ["subnet-12345678", "subnet-87654321"]
+    certificate_arn    = "arn:aws:acm:region:account:certificate/certificate-id"
     security_group_ids = ["sg-12345678"]
   }
-  
+
   # Configurações específicas do GCP
   gcp_config = {
-    project      = "my-gcp-project"
-    network      = "default"
-    subnetwork   = "default"
-    region       = "us-central1"
+    project         = "my-gcp-project"
+    network         = "default"
+    subnetwork      = "default"
+    region          = "us-central1"
     ssl_certificate = "projects/my-gcp-project/global/sslCertificates/my-cert"
   }
-  
+
   # Tags
   tags = {
     Service     = "api-service"

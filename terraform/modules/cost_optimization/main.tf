@@ -7,16 +7,16 @@
 locals {
   # Converter horários de trabalho para segundos desde a meia-noite
   horario_inicio_segundos = tonumber(split(":", var.horario_trabalho_inicio)[0]) * 3600 + tonumber(split(":", var.horario_trabalho_inicio)[1]) * 60
-  horario_fim_segundos = tonumber(split(":", var.horario_trabalho_fim)[0]) * 3600 + tonumber(split(":", var.horario_trabalho_fim)[1]) * 60
-  
+  horario_fim_segundos    = tonumber(split(":", var.horario_trabalho_fim)[0]) * 3600 + tonumber(split(":", var.horario_trabalho_fim)[1]) * 60
+
   # Dias da semana em que o desligamento está ativo (1 = segunda, 7 = domingo)
   dias_desligamento = [for dia in var.dias_desligamento : index(["seg", "ter", "qua", "qui", "sex", "sab", "dom"], dia) + 1]
-  
+
   # Tags para identificar recursos gerenciados por este módulo
   resource_tags = merge(
     var.resource_tags,
     {
-      managed_by = "terraform-cost-optimization-module"
+      managed_by    = "terraform-cost-optimization-module"
       auto_shutdown = var.enable_auto_shutdown ? "true" : "false"
     }
   )
@@ -25,63 +25,63 @@ locals {
 # Monitoramento de recursos subutilizados usando o DigitalOcean Monitoring
 resource "digitalocean_monitor_alert" "cpu_underutilization" {
   count = var.enable_underutilization_monitoring ? 1 : 0
-  
+
   alerts {
     email = var.alert_emails
     slack {
       channel = var.slack_channel
-      url = var.slack_webhook_url
+      url     = var.slack_webhook_url
     }
   }
-  
-  window = "5m"
-  type = "v1/insights/droplet/cpu"
-  compare = "LessThan"
-  value = var.cpu_underutilization_threshold
+
+  window      = "5m"
+  type        = "v1/insights/droplet/cpu"
+  compare     = "LessThan"
+  value       = var.cpu_underutilization_threshold
   description = "Alerta de subutilização de CPU - abaixo de ${var.cpu_underutilization_threshold}% por 5 minutos"
-  
+
   entities = var.monitored_droplet_ids
-  
+
   tags = local.resource_tags
 }
 
 resource "digitalocean_monitor_alert" "memory_underutilization" {
   count = var.enable_underutilization_monitoring ? 1 : 0
-  
+
   alerts {
     email = var.alert_emails
     slack {
       channel = var.slack_channel
-      url = var.slack_webhook_url
+      url     = var.slack_webhook_url
     }
   }
-  
-  window = "5m"
-  type = "v1/insights/droplet/memory_utilization_percent"
-  compare = "LessThan"
-  value = var.memory_underutilization_threshold
+
+  window      = "5m"
+  type        = "v1/insights/droplet/memory_utilization_percent"
+  compare     = "LessThan"
+  value       = var.memory_underutilization_threshold
   description = "Alerta de subutilização de memória - abaixo de ${var.memory_underutilization_threshold}% por 5 minutos"
-  
+
   entities = var.monitored_droplet_ids
-  
+
   tags = local.resource_tags
 }
 
 # Agendamento e automação de desligamento
 resource "digitalocean_project_resources" "ambientes_nao_produtivos" {
-  count = var.enable_auto_shutdown ? 1 : 0
-  project = var.project_id
+  count     = var.enable_auto_shutdown ? 1 : 0
+  project   = var.project_id
   resources = var.non_prod_resource_ids
 }
 
 # Cloud Function para desligamento automático
 resource "digitalocean_spaces_bucket" "automation_code" {
   count = var.enable_auto_shutdown ? 1 : 0
-  
+
   name   = "${var.project_name}-${var.environment}-automation"
   region = var.region
   acl    = "private"
-  
+
   versioning {
     enabled = true
   }
@@ -90,9 +90,9 @@ resource "digitalocean_spaces_bucket" "automation_code" {
 # Código para a automação de desligamento
 resource "digitalocean_spaces_bucket_object" "shutdown_code" {
   count = var.enable_auto_shutdown ? 1 : 0
-  
-  bucket = digitalocean_spaces_bucket.automation_code[0].name
-  key    = "auto_shutdown.py"
+
+  bucket  = digitalocean_spaces_bucket.automation_code[0].name
+  key     = "auto_shutdown.py"
   content = <<-EOT
 import requests
 import time
@@ -203,39 +203,39 @@ EOT
 # Função de automação usando App Platform ou Functions (se disponível)
 resource "digitalocean_app" "cost_optimizer" {
   count = var.enable_auto_shutdown ? 1 : 0
-  
+
   spec {
     name   = "${var.project_name}-${var.environment}-cost-optimizer"
     region = var.region
-    
+
     service {
       name               = "cost-optimizer-service"
       instance_count     = 1
       instance_size_slug = "basic-xxs"
-      
+
       github {
         repo           = var.github_repo
         branch         = var.github_branch
         deploy_on_push = true
       }
-      
+
       env {
         key   = "DIGITALOCEAN_API_TOKEN"
         value = var.do_api_token
         type  = "SECRET"
       }
-      
+
       routes {
         path = "/"
       }
-      
+
       run_command = "python3 auto_shutdown.py"
-      
+
       # Executar a cada 30 minutos
       cron_jobs {
-        name = "auto-shutdown-job"
+        name     = "auto-shutdown-job"
         schedule = "*/30 * * * *"
-        command = "python3 auto_shutdown.py"
+        command  = "python3 auto_shutdown.py"
       }
     }
   }
@@ -244,7 +244,7 @@ resource "digitalocean_app" "cost_optimizer" {
 # Relatórios de uso e economia - armazenados no Spaces
 resource "digitalocean_spaces_bucket" "cost_reports" {
   count = var.enable_cost_reporting ? 1 : 0
-  
+
   name   = "${var.project_name}-${var.environment}-cost-reports"
   region = var.region
   acl    = "private"
@@ -253,32 +253,32 @@ resource "digitalocean_spaces_bucket" "cost_reports" {
 # Alertas de orçamento para controle de gastos
 resource "digitalocean_monitor_alert" "budget_alert" {
   count = var.enable_budget_alerts ? 1 : 0
-  
+
   alerts {
     email = var.alert_emails
     slack {
       channel = var.slack_channel
-      url = var.slack_webhook_url
+      url     = var.slack_webhook_url
     }
   }
-  
-  window = "24h"
-  type = "v1/insights/droplet/spend"
-  compare = "GreaterThan"
-  value = var.budget_threshold
+
+  window      = "24h"
+  type        = "v1/insights/droplet/spend"
+  compare     = "GreaterThan"
+  value       = var.budget_threshold
   description = "Alerta de orçamento - gasto acima de $${var.budget_threshold} em 24 horas"
-  
+
   entities = var.monitored_droplet_ids
 }
 
 # Script local para gerar relatório de economia
 resource "null_resource" "savings_estimator" {
   count = var.enable_cost_reporting ? 1 : 0
-  
+
   triggers = {
     report_time = timestamp()
   }
-  
+
   provisioner "local-exec" {
     command = <<-EOT
       echo "Estimativa de economia com otimizações:"

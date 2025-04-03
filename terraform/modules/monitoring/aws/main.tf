@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 locals {
   # Determinar o namespace correto baseado no tipo de serviço
   service_type = var.kubernetes_service ? "AWS/EKS" : "AWS/ECS"
